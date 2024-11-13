@@ -1,0 +1,197 @@
+---
+title: "AssignmentI"
+author: "Group2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+
+# Data Exploration
+
+# Question 1
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 2
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 3
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 4
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 5
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 6
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 7
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 8
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 9
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 10
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 11
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 12
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
+
+# Question 13
+
+## Overview : 
+
+## Code :
+
+```{r echo=FALSE}
+
+```
+
+## Output : 
+
+## Analysis : 
