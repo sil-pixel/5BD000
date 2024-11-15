@@ -91,5 +91,64 @@ summary_data <- summary_data %>%
 
 head(summary_data)
 
+# Q6
+
+ggplot(summary_data, aes(x = year, y = incidence_rate, color = sex)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal()
+
+ggplot(merged_data, aes(x = year, y = incidence_rate, color = agegroup)) +
+  geom_point(cex = 0.7) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year by age group and sex",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal() +
+  facet_wrap(~ sex) 
+
+# Q7
+
+poisson_model <- glm(total_cases ~ year + sex + offset(log(total_population)), 
+                     data = summary_data,
+                     family = poisson)
+
+summary(poisson_model)
+
+# Q8
+
+predict_data <- data.frame(year = c(1970, 2020),
+                           sex = rep(c("Male", "Female"), each = 2),
+                           total_population = 100000)  
+
+predict_data$predicted_cases <- predict(poisson_model,
+                                        newdata = predict_data,
+                                        type = "response")
+
+predict_data$incidence_rate <- (predict_data$predicted_cases / predict_data$total_population) 
+print(predict_data)
+
+# Q9
+
+poisson_model_age <- glm(n ~ year + sex + agegroup + offset(log(n_pop)),
+                         data = merged_data,
+                         family = poisson)
+
+summary(poisson_model_age)
+
+predict_data_age <- data.frame(year = c(1970, 2020),
+                               agegroup = '70-74',
+                               sex = rep(c("Male", "Female"), each = 2),
+                               n_pop = 100000)  
+
+predict_data_age$predicted_cases <- predict(poisson_model_age,
+                                        newdata = predict_data_age,
+                                        type = "response")
+
+predict_data_age$incidence_rate <- (predict_data_age$predicted_cases / predict_data_age$n_pop) 
+print(predict_data_age)
 
 
