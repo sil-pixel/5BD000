@@ -3,6 +3,7 @@ library(ggplot2)
 library(dplyr)
 library(scales)
 
+# Q1
 
 path_to_cases <- "cases.tsv"
 cases<- read_tsv(path_to_cases)
@@ -22,7 +23,7 @@ ggplot(cases, aes(x = agegroup, y = n, fill = sex)) +
   scale_y_continuous(labels = label_comma())+
   theme(plot.title = element_text(hjust = 0.5))
 
-
+# Q2
 
 total_cases_by_year_sex<- cases %>%
   group_by(year, sex) %>%
@@ -49,6 +50,8 @@ ggplot(subset(total_cases_by_year_sex, sex == "Male"), aes(x = year, y = total_c
   scale_y_continuous(labels = label_comma())+
   theme(plot.title = element_text(hjust = 0.5))
 
+# Q3
+
 path_to_population <- "population.tsv"
 population<- read_tsv("path_to_population")
 
@@ -70,6 +73,7 @@ ggplot(population, aes(x = agegroup, y = n_pop, fill = sex)) +
   theme(axis.text.x = element_blank())+
   theme(plot.title = element_text(hjust = 0.5))
 
+# Q4
 
 merged_data <- left_join(cases, population, by = c("agegroup", "year", "sex"))
 
@@ -80,6 +84,8 @@ summary_data <- merged_data %>%
     total_population = sum(n_pop, na.rm = TRUE) 
   )
 head(summary_data)
+
+# Q5
 
 merged_data <- merged_data %>%
   mutate(incidence_rate = n/ n_pop)

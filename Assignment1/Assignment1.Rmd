@@ -7,10 +7,14 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(scales)
 ```
 
 # Introduction
-
 
 # Data Exploration
 
@@ -18,71 +22,174 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Overview : 
 
+Creating a plot showing the number of cases by age group and sex.
+
 ## Code :
 
 ```{r echo=FALSE}
+path_to_cases <- "cases.tsv"
+cases<- read_tsv(path_to_cases)
 
+cases$agegroup <- factor(cases$agegroup, 
+            levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
+            "25-29", "30-34", "35-39", "40-44", "45-49", 
+            "50-54", "55-59", "60-64", "65-69", "70-74", 
+            "75-79", "80-84", "85-89"))
+
+ggplot(cases, aes(x = agegroup, y = n, fill = sex)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Number of Colon Cancer Cases by Age Group and Sex",
+       x = "Age Group",
+       y = "Number of Cases") +
+  theme_minimal()+
+  scale_y_continuous(labels = label_comma())+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ## Output : 
 
+Generated plot visualizing age group distribution.
+
 ## Analysis : 
+
+From the plot we can conclude that the risk of getting a colon cancer increases exponentially above the age approx. 40-44, for both men and women. We can also see a clear trend of the number of cases being slightly higher for men up to the age group 80-84 when the trend reverses.
 
 # Question 2
 
 ## Overview : 
 
+Plotting colon cancer cases across subsequent years.
+
 ## Code :
 
 ```{r echo=FALSE}
+total_cases_by_year_sex<- cases %>%
+  group_by(year, sex) %>%
+  summarise(total_cases = sum(n, na.rm = TRUE))
 
+ggplot(subset(total_cases_by_year_sex, sex == "Female"), aes(x = year, y = total_cases)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Number of Colon Cancer Cases for Females by Year",
+       x = "Year",
+       y = "Total Number of Cases") +
+  theme_minimal()+
+  scale_y_continuous(labels = label_comma())+
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(subset(total_cases_by_year_sex, sex == "Male"), aes(x = year, y = total_cases)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Number of Colon Cancer Cases for Males by Year",
+       x = "Year",
+       y = "Total Number of Cases") +
+  theme_minimal()+
+  scale_y_continuous(labels = label_comma())+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ## Output : 
 
+Two plots showing the nunber of cases in each calendar year.
+
 ## Analysis : 
+
+From the two graphs we can see that there exists a trend of increasing colon cancer cases in subsequent calendar years.
 
 # Question 3
 
 ## Overview : 
 
+Exploring population data and plotting population size by age group and sex across subsequent years.
+
 ## Code :
 
 ```{r echo=FALSE}
+path_to_population <- "population.tsv"
+population<- read_tsv("path_to_population")
 
+population$agegroup <- factor(population$agegroup, 
+                         levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
+                                    "25-29", "30-34", "35-39", "40-44", "45-49", 
+                                    "50-54", "55-59", "60-64", "65-69", "70-74", 
+                                    "75-79", "80-84", "85-89"))
+
+
+ggplot(population, aes(x = agegroup, y = n_pop, fill = sex)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  facet_wrap(~ year) + 
+  labs(title = "Population Size by Age Group and Year",
+       x = "Age Group",
+       y = "Population Size") +
+  theme_minimal() + 
+  scale_y_continuous(labels = label_comma())+
+  theme(axis.text.x = element_blank())+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ## Output : 
 
+A figure showing a plots for every year in the data set. Each of the plots shows pupulation size across different age groups, the bars colors correspond to sex (orange - female, green - male).
+
 ## Analysis : 
+
+Population file inculdes the same variables and their types as cases file. The age groups, and calendar years are also the same. The difference is in the order of columns, and the year column is reversed in population, relative to cases.
 
 # Question 4
 
 ## Overview : 
 
+Merging the data and creating a data frame that shows total number of cases and the total population of males and females in each year.
+
 ## Code :
 
 ```{r echo=FALSE}
+merged_data <- left_join(cases, population, by = c("agegroup", "year", "sex"))
 
+summary_data <- merged_data %>%
+  group_by(year, sex) %>%
+  summarise(
+    total_cases = sum(n, na.rm = TRUE), 
+    total_population = sum(n_pop, na.rm = TRUE) 
+  )
+head(summary_data)
 ```
 
 ## Output : 
 
+New data frame that stores information merged from both of the analyzed datasets. 
+
 ## Analysis : 
+
+-
 
 # Question 5
 
 ## Overview : 
 
+Creating a new dataframe that will show incidence rate among both sexes in each year.
+
 ## Code :
 
 ```{r echo=FALSE}
+merged_data <- merged_data %>%
+  mutate(incidence_rate = n/ n_pop)
 
+head(merged_data)
+
+summary_data <- summary_data %>%
+  mutate(incidence_rate = total_cases / total_population)
+
+head(summary_data)
 ```
 
 ## Output : 
 
+A dataframe with information on the number of cases, populaltion and incidence year for men and women in each year. 
+
 ## Analysis : 
+
+Incidence rate is the number of new cases of the outcome divided by the total person-time at risk, for a specific follow-up period. Here we simply divide the number of cases by the population size, without accounting for the time. For this type of data where we do not know the person-time at risk, it appears to be an appropriate way of calculating an incidence rate. However, this way should provide a reasonable estimate when, for example, the population is relatively stable over the time period (we can see from the plots in Question 3 that the population changes over the given time - we have more people in the elderly age group as the years increase). This suggests that this data is not suitable to infere the incidence rate.
 
 # Question 6
 
