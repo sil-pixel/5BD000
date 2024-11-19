@@ -191,15 +191,35 @@ Incidence rate is the number of new cases of the outcome divided by the total pe
 
 ## Overview : 
 
+Plot the incidence rate of colon cancer over calendar time and apply a smoother, separately by males and females
+Create a graph of incidence rates over calendar year by sex and age group, and apply smoothers
 ## Code :
 
-```{r echo=FALSE}
+ggplot(summary_data, aes(x = year, y = incidence_rate, color = sex)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal()
 
-```
+ggplot(merged_data, aes(x = year, y = incidence_rate, color = agegroup)) +
+  geom_point(cex = 0.7) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year by age group and sex",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal() +
+  facet_wrap(~ sex) 
 
 ## Output : 
+Two graphs, the first of which shows the changes in the incidence of male and female disease in different years
+The second chart shows the changes of men and women in different age groups over the years
 
 ## Analysis : 
+With the increase of years, the incidence of colon cancer in both men and women gradually increased
+Overall, the incidence of colon cancer was slightly lower in men than in women
+
 
 # Question 7
 
@@ -219,66 +239,29 @@ Incidence rate is the number of new cases of the outcome divided by the total pe
 
 ## Overview : 
 
-Based on the poisson regression model, calculate the incidence rates in 1970 and 2020 for males and females, and discuss the assumptions about how rates change over time and between sexes.
-
 ## Code :
 
 ```{r echo=FALSE}
-predict_data <- data.frame(year = c(1970, 2020),
-                           sex = rep(c("Male", "Female"), each = 2),
-                           total_population = 100000)  
 
-predict_data$predicted_cases <- predict(poisson_model,
-                                        newdata = predict_data,
-                                        type = "response")
-
-predict_data$incidence_rate <- (predict_data$predicted_cases / predict_data$total_population) 
-print(predict_data)
 ```
 
 ## Output : 
 
-A data frame with year, sex, and total population in the first three columns and the predicted number of cases as well as the corresponding incidence rate in the last two columns.
-
 ## Analysis : 
-
-From the result, the incidence rate in 1970 among males and females was 0.0002773751 and 0.0002933271, separately. Moreover, the incidence rate in 2020 among males and females was 0.0004794199 and 0.0004794199, separately. In addition to the above information, assumptions can be made that the incidence rate becomes larger over the calendar years, and the incidence rate for males is lower than for females.
 
 # Question 9
 
 ## Overview : 
 
-Fit a Poisson regression model that adjusts for age groups and calculate the incidence rates for males and females in the 70-74 age group for 1970 and 2020.
-
 ## Code :
 
 ```{r echo=FALSE}
-poisson_model_age <- glm(n ~ year + sex + agegroup + offset(log(n_pop)),
-                         data = merged_data,
-                         family = poisson)
 
-summary(poisson_model_age)
-
-predict_data_age <- data.frame(year = c(1970, 2020),
-                               agegroup = '70-74',
-                               sex = rep(c("Male", "Female"), each = 2),
-                               n_pop = 100000)  
-
-predict_data_age$predicted_cases <- predict(poisson_model_age,
-                                        newdata = predict_data_age,
-                                        type = "response")
-
-predict_data_age$incidence_rate <- (predict_data_age$predicted_cases / predict_data_age$n_pop) 
-print(predict_data_age)
 ```
 
 ## Output : 
 
-A detailed summary information of the new poisson model. A data frame with year, age group, sex, and population in the first four columns and the predicted number of cases as well as the corresponding incidence rate in the last two columns.
-
 ## Analysis : 
-
-From the result, the incidence rate in 1970 in age group 70-74 among males and females was 0.001360602 and 0.001164685, separately. Moreover, the incidence rate in 2020 in age group 70-74 among males and females was 0.001782354 and 0.001525708, separately.
 
 # Question 10
 
