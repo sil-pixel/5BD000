@@ -53,7 +53,7 @@ ggplot(subset(total_cases_by_year_sex, sex == "Male"), aes(x = year, y = total_c
 # Q3
 
 path_to_population <- "population.tsv"
-population<- read_tsv("path_to_population")
+population<- read_tsv(path_to_population)
 
 population$agegroup <- factor(population$agegroup, 
                          levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
@@ -157,4 +157,70 @@ predict_data_age$predicted_cases <- predict(poisson_model_age,
 predict_data_age$incidence_rate <- (predict_data_age$predicted_cases / predict_data_age$n_pop) 
 print(predict_data_age)
 
+#Q11
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
 
+# Load the data
+cases <- read.delim("cases.tsv")
+population <- read.delim("population.tsv")
+head(cases)
+head(population)
+
+# Summarize the age distribution in 2022
+standard_population <- population %>%
+  filter(year == 2022) %>%
+  group_by(sex, agegroup) %>%
+  summarise(Population_2022 = sum(n_pop), .groups = "drop")
+
+head(standard_population)
+
+# Merge cases and population data
+merged_data <- cases %>%
+  left_join(population, by = c("year", "agegroup", "sex"))
+
+# Calculate crude incidence rates
+merged_data <- merged_data %>%
+  mutate(Crude_Incidence_Rate = n / n_pop)
+
+standardized_rates <- merged_data %>%
+  filter(!is.na(Crude_Incidence_Rate)) %>%
+  left_join(standard_population, by = c("sex", "agegroup")) %>%
+  group_by(year, sex) %>%
+  summarise(
+    Standardized_Rate = sum(Crude_Incidence_Rate * Population_2022) / sum(Population_2022),
+    .groups = "drop"
+  )
+
+head(standardized_rates)
+
+# Calculate non-age-standardized (crude) rates per year and sex
+crude_rates <- merged_data %>%
+  group_by(year, sex) %>%
+  summarise(
+    Crude_Rate = sum(n) / sum(n_pop),
+    .groups = "drop"
+  )
+
+# Combine standardized and crude rates for plotting
+
+comparison_data <- crude_rates %>%
+  rename(Rate = Crude_Rate) %>%
+  mutate(Type = "Non-Age-Standardized") %>%
+  bind_rows(
+    standardized_rates %>%
+      rename(Rate = Standardized_Rate) %>%
+      mutate(Type = "Age-Standardized")
+  )
+
+# Plot standardized vs non-standardized rates
+ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
+  geom_line() +
+  labs(
+    title = "Comparison of Age-Standardized vs Non-Age-Standardized Incidence Rates",
+    x = "Year",
+    y = "Incidence Rate",
+    color = "Rate Type"
+  ) +
+  theme_minimal()

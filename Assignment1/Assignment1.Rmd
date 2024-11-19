@@ -294,15 +294,134 @@ print(predict_data_age)
 
 ## Overview : 
 
+The task is to calculate direct age-standardized incidence rates for colon cancer across calendar years and sexes, using the population age distribution from 2022 as the reference (standard population). The objective is to create a graph of the age-standardized incidence rates and compare it with the non-age-standardized (crude) rates for males and females over time.
+
 ## Code :
 
-```{r echo=FALSE}
+To solve this, there are a series of steps that involves significant data pre-processing. 
+
+1. Define a Standard Population: Use the age distribution from 2022 as the reference.
+
+```{r echo=TRUE}
+# Summarize the age distribution in 2022
+standard_population <- population %>%
+  filter(year == 2022) %>%
+  group_by(sex, agegroup) %>%
+  summarise(Population_2022 = sum(n_pop), .groups = "drop")
+
+head(standard_population)
+```
+
+2. Calculate Crude Rates: Determine the number of cases per unit population for each year, age group, and sex.
+
+```{r echo=TRUE}
+# Merge cases and population data
+merged_data <- cases %>%
+  left_join(population, by = c("year", "agegroup", "sex"))
+
+# Calculate crude incidence rates
+merged_data <- merged_data %>%
+  mutate(Crude_Incidence_Rate = n / n_pop)
+
+head(merged_data)
+```
+
+3. Standardize Rates: Weight the crude rates by the 2022 age distribution to compute age-standardized rates.
+
+```{r echo=TRUE}
+standardized_rates <- merged_data %>%
+  filter(!is.na(Crude_Incidence_Rate)) %>%
+  left_join(standard_population, by = c("sex", "agegroup")) %>%
+  group_by(year, sex) %>%
+  summarise(
+    Standardized_Rate = sum(Crude_Incidence_Rate * Population_2022) / sum(Population_2022),
+    .groups = "drop"
+  )
+
+head(standardized_rates)
+```
+
+4. Visualization: Compare age-standardized and crude incidence rates across calendar years to evaluate the impact of standardization and reveal true trends. 
+
+We first compute the crude incidence rates and group by year and sex, similar to how we computed 'standardized_rates'. 
+
+```{r echo=TRUE}
+crude_rates <- merged_data %>%
+  group_by(year, sex) %>%
+  summarise(
+    Crude_Rate = sum(n) / sum(n_pop),
+    .groups = "drop"
+  )
+
+```
+
+In order to compare the age-standardized rates vs the non-standardized rates, we combine the tables 'standardized_rates' and 'crude_rates' and create distinct columns to distinguish between each other. 
+
+
+```{r echo=TRUE}
+comparison_data <- crude_rates %>%
+  rename(Rate = Crude_Rate) %>%
+  mutate(Type = "Non-Age-Standardized") %>%
+  bind_rows(
+    standardized_rates %>%
+      rename(Rate = Standardized_Rate) %>%
+      mutate(Type = "Age-Standardized")
+  )
+
+head(comparison_data)
+
+```
+
+Finally, we plot the graph using this newly created table. 
+
+
+```{r echo=TRUE, results='hide'}
+ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
+  geom_line() +
+  labs(
+    title = "Comparison of Age-Standardized vs Non-Age-Standardized Incidence Rates",
+    x = "Year",
+    y = "Incidence Rate",
+    color = "Rate Type"
+  ) +
+  theme_minimal()
 
 ```
 
 ## Output : 
+```{r echo=TRUE, fig.align='center'}
+ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
+  geom_line() +
+  labs(
+    title = "Comparison of Age-Standardized vs Non-Age-Standardized Incidence Rates",
+    x = "Year",
+    y = "Incidence Rate",
+    color = "Rate Type"
+  ) +
+  theme_minimal()
+
+```
 
 ## Analysis : 
+
+1. Difference Between Standardized and Crude Rates:
+
+  - The age-standardized rates are generally higher than the crude rates for both sexes, particularly in recent years.
+  - This suggests that the population's age structure has shifted, with an increasing proportion of older individuals (who have a higher incidence of colon cancer).
+
+2. Trend Over Time:
+
+  - Both standardized and crude rates show an increasing trend over time, indicating a rising incidence of colon cancer from 1970 to 2020.
+  - The steeper increase in crude rates reflects the influence of population aging.
+
+3. Sex-Specific Differences:
+
+  - Males consistently exhibit slightly higher incidence rates than females across all years in both age-standardized and crude measures.
+  - This could be attributed to differences in biological, behavioral, or exposure-related factors.
+
+### Conclusion:
+
+Age-standardization adjusts for changes in the population's age distribution, providing a clearer picture of temporal trends. The increasing standardized rates suggest a true rise in colon cancer incidence beyond the effects of aging.
 
 # Question 12
 
