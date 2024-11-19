@@ -2,6 +2,7 @@ library(readr)
 library(ggplot2)
 library(dplyr)
 library(scales)
+library(splines)
 
 # Q1
 
@@ -157,6 +158,61 @@ predict_data_age$predicted_cases <- predict(poisson_model_age,
 predict_data_age$incidence_rate <- (predict_data_age$predicted_cases / predict_data_age$n_pop) 
 print(predict_data_age)
 
+#Q10
+
+# Convert agegroup to midpoints
+age_midpoints <- c(2.5, 7.5, 12.5, 17.5, 22.5, 27.5, 32.5, 37.5, 42.5, 47.5, 
+                   52.5, 57.5, 62.5, 67.5, 72.5, 77.5, 82.5, 87.5)
+names(age_midpoints) <- levels(cases$agegroup)
+
+merged_data <- merged_data %>%
+  mutate(age_mid = age_midpoints[as.character(agegroup)])
+
+# Fit Poisson model with splines
+spline_model <- glm(n ~ ns(year, df = 4) * sex + ns(age_mid, df = 4),
+                    data = merged_data,
+                    offset = log(n_pop),
+                    family = poisson)
+
+summary(spline_model)
+
+# Data for prediction
+predict_data <- expand.grid(
+  year = seq(min(merged_data$year), max(merged_data$year), by = 1),
+  age_mid = c(52, 72, 87),  # Specific ages for prediction
+  sex = c("Male", "Female"),
+  n_pop = 100000  # Assume a constant population for prediction
+)
+
+predict_data$predicted_cases <- predict(spline_model, newdata = predict_data, type = "response")
+predict_data$incidence_rate <- predict_data$predicted_cases / predict_data$n_pop
+
+# Extract observed data for age groups 50-54, 70-74, 85-89
+observed_data <- merged_data %>%
+  filter(agegroup %in% c("50-54", "70-74", "85-89")) %>%
+  group_by(year, sex, agegroup) %>%
+  summarise(incidence_rate = sum(n) / sum(n_pop), .groups = 'drop')
+
+# Match midpoints for comparison
+observed_data <- observed_data %>%
+  mutate(age_mid = age_midpoints[as.character(agegroup)])
+
+
+
+# Plot modeled vs. observed incidence rates
+ggplot() +
+  geom_line(data = predict_data, aes(x = year, y = incidence_rate, color = factor(age_mid), linetype = sex), size = 1) +
+  geom_point(data = observed_data, aes(x = year, y = incidence_rate, shape = sex, color = factor(age_mid)), size = 2) +
+  labs(
+    title = "Modeled vs Observed Incidence Rates Across Calendar Time",
+    x = "Year",
+    y = "Incidence Rate",
+    color = "Age",
+    linetype = "Sex",
+    shape = "Sex"
+  ) +
+  theme_minimal()
+
 #Q11
 # Load necessary libraries
 library(dplyr)
@@ -224,3 +280,5 @@ ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
     color = "Rate Type"
   ) +
   theme_minimal()
+
+

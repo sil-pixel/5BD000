@@ -242,7 +242,7 @@ A data frame with year, sex, and total population in the first three columns and
 
 ## Analysis : 
 
-From the result, the incidence rate in 1970 among males and females was 0.0002773751 and 0.0002933271, separately. Moreover, the incidence rate in 1970 among males and females was 0.0004794199 and 0.0004794199, separately.
+From the result, the incidence rate in 1970 among males and females was 0.0002773751 and 0.0002933271, separately. Moreover, the incidence rate in 2020 among males and females was 0.0004794199 and 0.0004794199, separately. The assumption for year is that the incidence rate changes linearly over the calendar year, and the assumption for the sex is that there is no interaction between sex and year, which means that the ratio of the incidence rate of male and female is an unchanged constant.
 
 # Question 9
 
@@ -274,7 +274,11 @@ print(predict_data_age)
 
 ## Output : 
 
+A detailed summary information of the new poisson model. A data frame with year, age group, sex, and population in the first four columns and the predicted number of cases as well as the corresponding incidence rate in the last two columns.
+
 ## Analysis : 
+
+From the result, the incidence rate in 1970 in age group 70-74 among males and females was 0.001360602 and 0.001164685, separately. Moreover, the incidence rate in 2020 in age group 70-74 among males and females was 0.001782354 and 0.001525708, separately.
 
 # Question 10
 
