@@ -28,7 +28,7 @@ Creating a plot showing the number of cases by age group and sex.
 
 ```{r echo=FALSE}
 path_to_cases <- "cases.tsv"
-cases<- read_tsv(path_to_cases)
+cases <- read_tsv(path_to_cases)
 
 cases$agegroup <- factor(cases$agegroup, 
             levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
@@ -106,7 +106,7 @@ Exploring population data and plotting population size by age group and sex acro
 
 ```{r echo=FALSE}
 path_to_population <- "population.tsv"
-population<- read_tsv("path_to_population")
+population<- read_tsv(path_to_population)
 
 population$agegroup <- factor(population$agegroup, 
                          levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
@@ -157,17 +157,13 @@ head(summary_data)
 
 ## Output : 
 
-New data frame that stores information merged from both of the analyzed datasets. 
-
-## Analysis : 
-
--
+New data frame that stores information merged from both of the analyzed data sets. 
 
 # Question 5
 
 ## Overview : 
 
-Creating a new dataframe that will show incidence rate among both sexes in each year.
+Creating a new data frame that will show incidence rate among both sexes in each year.
 
 ## Code :
 
