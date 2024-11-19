@@ -242,7 +242,7 @@ A data frame with year, sex, and total population in the first three columns and
 
 ## Analysis : 
 
-From the result, the incidence rate in 1970 among males and females was 0.0002773751 and 0.0002933271, separately. Moreover, the incidence rate in 2020 among males and females was 0.0004794199 and 0.0004794199, separately. In addition to the above information, assumptions can be made that the incidence rate becomes larger over the calendar years, and the incidence rate for males is lower than for females.
+From the result, the incidence rate in 1970 among males and females was 0.0002773751 and 0.0002933271, separately. Moreover, the incidence rate in 2020 among males and females was 0.0004794199 and 0.0004794199, separately. The assumption for year is that the incidence rate changes linearly over the calendar year, and the assumption for the sex is that there is no interaction between sex and year, which means that the ratio of the incidence rate of male and female is an unchanged constant.
 
 # Question 9
 
