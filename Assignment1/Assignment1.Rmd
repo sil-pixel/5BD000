@@ -26,7 +26,7 @@ Creating a plot showing the number of cases by age group and sex.
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 path_to_cases <- "cases.tsv"
 cases <- read_tsv(path_to_cases)
 
@@ -62,7 +62,7 @@ Plotting colon cancer cases across subsequent years.
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 total_cases_by_year_sex<- cases %>%
   group_by(year, sex) %>%
   summarise(total_cases = sum(n, na.rm = TRUE))
@@ -104,7 +104,7 @@ Exploring population data and plotting population size by age group and sex acro
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 path_to_population <- "population.tsv"
 population<- read_tsv(path_to_population)
 
@@ -143,7 +143,7 @@ Merging the data and creating a data frame that shows total number of cases and 
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 merged_data <- left_join(cases, population, by = c("agegroup", "year", "sex"))
 
 summary_data <- merged_data %>%
@@ -167,7 +167,7 @@ Creating a new data frame that will show incidence rate among both sexes in each
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 merged_data <- merged_data %>%
   mutate(incidence_rate = n/ n_pop)
 
@@ -196,7 +196,7 @@ Creating a graph of incidence rates over calendar year by sex and age group, and
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 ggplot(summary_data, aes(x = year, y = incidence_rate, color = sex)) +
   geom_point() +
   geom_smooth(method = "loess", se = FALSE) +
@@ -241,7 +241,7 @@ size as an offset, and calendar year and sex as independent variables.
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 poisson_model <- glm(total_cases ~ year + sex + offset(log(total_population)), 
                      data = summary_data,
                      family = poisson)
@@ -267,7 +267,7 @@ Based on the poisson regression model, calculate the incidence rates in 1970 and
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 predict_data <- data.frame(year = c(1970, 2020),
                            sex = rep(c("Male", "Female"), each = 2),
                            total_population = 100000)  
@@ -296,7 +296,7 @@ Fit a Poisson regression model that adjusts for age groups and calculate the inc
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 poisson_model_age <- glm(n ~ year + sex + agegroup + offset(log(n_pop)),
                          data = merged_data,
                          family = poisson)
@@ -330,7 +330,7 @@ From the result, the incidence rate in 1970 in age group 70-74 among males and f
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 
 ```
 
@@ -477,7 +477,7 @@ Age-standardization adjusts for changes in the population's age distribution, pr
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 
 ```
 
@@ -491,7 +491,7 @@ Age-standardization adjusts for changes in the population's age distribution, pr
 
 ## Code :
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 
 ```
 
