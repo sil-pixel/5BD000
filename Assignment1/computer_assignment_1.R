@@ -169,7 +169,7 @@ merged_data <- merged_data %>%
   mutate(age_mid = age_midpoints[as.character(agegroup)])
 
 # Fit Poisson model with splines
-spline_model <- glm(n ~ ns(year, df = 4) * sex + ns(age_mid, df = 4),
+spline_model <- glm(n ~ ns(year, df = 4) * sex * ns(age_mid, df = 4),
                     data = merged_data,
                     offset = log(n_pop),
                     family = poisson)
@@ -193,16 +193,10 @@ observed_data <- merged_data %>%
   group_by(year, sex, agegroup) %>%
   summarise(incidence_rate = sum(n) / sum(n_pop), .groups = 'drop')
 
-# Match midpoints for comparison
-observed_data <- observed_data %>%
-  mutate(age_mid = age_midpoints[as.character(agegroup)])
-
-
-
 # Plot modeled vs. observed incidence rates
 ggplot() +
   geom_line(data = predict_data, aes(x = year, y = incidence_rate, color = factor(age_mid), linetype = sex), size = 1) +
-  geom_point(data = observed_data, aes(x = year, y = incidence_rate, shape = sex, color = factor(age_mid)), size = 2) +
+  geom_point(data = observed_data, aes(x = year, y = incidence_rate, shape = sex, color = factor(agegroup)), size = 2) +
   labs(
     title = "Modeled vs Observed Incidence Rates Across Calendar Time",
     x = "Year",

@@ -12,6 +12,7 @@ library(readr)
 library(ggplot2)
 library(dplyr)
 library(scales)
+library(splines)
 ```
 
 # Introduction
@@ -328,16 +329,102 @@ From the result, the incidence rate in 1970 in age group 70-74 among males and f
 
 ## Overview : 
 
+Refit the above model using splines for the effect of calendar year and age group. 
+Plotting graphs to show the incidence rate across calendar time for males and
+females at ages 52, 72 and 87 and compare it with the known observed values for age 
+group 50-54, 70-74 and 85-89.
+
 ## Code :
 
-```{r echo=TRUE}
+1. Refit the model using splines :
+ - Remove the assumption that the pattern across calendar year is the same across age and sex by adding relation between calendar year, age and sex using natural splines.
+ - Natural Splines were used here since the relation between year, age and sex are not highly complex and unpredictable, and also for a smoother pattern and a cleaner fit. 
+ - The degrees of freedom were chosen to be 4 as it had the least AIC compared to the models with other degrees of freedom and it did not pose a risk of overfitting by requiring higher parameters for a smoother curve.
+ - A three-way interaction between year, sex and age-mid was included in the poisson model to capture more complexity and nuanced interactions between year, sex, and age and the subtle patterns in the data.
 
+
+```{r echo=TRUE}
+# Convert agegroup to midpoints
+age_midpoints <- c(2.5, 7.5, 12.5, 17.5, 22.5, 27.5, 32.5, 37.5, 42.5, 47.5, 
+                   52.5, 57.5, 62.5, 67.5, 72.5, 77.5, 82.5, 87.5)
+names(age_midpoints) <- levels(cases$agegroup)
+merged_data <- merged_data %>%
+  mutate(age_mid = age_midpoints[as.character(agegroup)])
+
+# Fit Poisson model with splines
+spline_model <- glm(n ~ ns(year, df = 4) * sex * ns(age_mid, df = 4), 
+                    data = merged_data,
+                    offset = log(n_pop),
+                    family = poisson)
+
+print(spline_model$aic)
+```
+
+Please refer to the Appendix for the entire summary for the spline model. 
+
+2. Plot the graphs with modeled vs observed incidence rate across calendar time :
+- First get the data for prediction from the newly fitted spline model and extract the observed data for the age groups 50-54, 70-74, 85-89.
+
+
+```{r echo=TRUE}
+# Data for prediction
+predict_data <- expand.grid(
+  year = seq(min(merged_data$year), max(merged_data$year), by = 1),
+  age_mid = c(52, 72, 87),  # Specific ages for prediction
+  sex = c("Male", "Female"),
+  n_pop = 100000  # Assume a constant population for prediction
+)
+
+predict_data$predicted_cases <- predict(spline_model, newdata = predict_data, 
+                                        type = "response")
+predict_data$incidence_rate <- predict_data$predicted_cases / predict_data$n_pop
+
+# Extract observed data for age groups 50-54, 70-74, 85-89
+observed_data <- merged_data %>%
+  filter(agegroup %in% c("50-54", "70-74", "85-89")) %>%
+  group_by(year, sex, agegroup) %>%
+  summarise(incidence_rate = sum(n) / sum(n_pop), .groups = 'drop')
 ```
 
 ## Output : 
 
+```{r echo=TRUE,fig.align='center'}
+# Plot modeled vs. observed incidence rates
+ggplot() +
+  geom_line(data = predict_data, aes(x = year, y = incidence_rate, 
+                                     color = factor(age_mid), linetype = sex), 
+            linewidth = 1) +
+  geom_point(data = observed_data, aes(x = year, y = incidence_rate, 
+                                       shape = sex, color = factor(agegroup)), 
+             size = 2) +
+  labs(
+    title = "Modeled vs Observed Incidence Rates Across Calendar Time",
+    x = "Year",
+    y = "Incidence Rate",
+    color = "Age",
+    linetype = "Sex",
+    shape = "Sex"
+  ) +
+  theme_minimal()
+```
+
 ## Analysis : 
 
+1. Overall Trends : 
+    - The modeled incidence rates (lines) show a gradual increase across calendar years for both sexes and age groups retaining the trend of drop in the incidence rate in females of age 85-89 between the year 2000 and 2010. 
+    - The observed values (points) generally align with the modeled rates but exhibit more variability, especially in older age groups.
+    
+2.	Differences by Age :
+	-	Incidence rates are consistently higher for older age groups (e.g., 87) compared to younger ones (e.g., 52), as clearly shown by both the modeled and observed rates.
+	- The gap between modeled and observed rates is slightly larger for older age groups, suggesting potential model misfit or variability in the data.
+    
+3.  Sex Differences :
+	-	For all age groups, the incidence rates are higher for males (solid lines, triangles) compared to females (dashed lines, circles), except for age 52, which are almost entirely aligned for male and female.
+    
+4.	Model Fit for Age Groups :
+	-	The modeled rates for ages 52 and 72 fit the observed data closely, indicating a good representation of trends, except for age 87, which generally captured the increasing trend in the modeled rates, had some noticeable deviations from the observed points for females.
+  
+    
 # Question 11
 
 ## Overview : 
@@ -498,3 +585,12 @@ Age-standardization adjusts for changes in the population's age distribution, pr
 ## Output : 
 
 ## Analysis : 
+
+
+
+
+## Appendix : 
+
+```{r echo=TRUE}
+summary(spline_model)
+```
