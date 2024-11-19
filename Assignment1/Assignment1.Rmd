@@ -191,29 +191,73 @@ Incidence rate is the number of new cases of the outcome divided by the total pe
 
 ## Overview : 
 
+Plotting the incidence rate of colon cancer over calendar time and apply asmoother, separately by males and females.
+Creating a graph of incidence rates over calendar year by sex and age group, and apply smoothers.
+
 ## Code :
 
 ```{r echo=FALSE}
+ggplot(summary_data, aes(x = year, y = incidence_rate, color = sex)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal()
 
+ggplot(merged_data, aes(x = year, y = incidence_rate, color = agegroup)) +
+  geom_point(cex = 0.7) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year by age group and sex",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal() +
+  facet_wrap(~ sex) 
 ```
 
 ## Output : 
 
+A graph showing the smoothed incidence rate trends for males and females over time.
+Faceted graphs showing incidence rate trends by age group and sex over calendar years.
+
 ## Analysis : 
+
+Overall Trends: The smoothed curves reveal increasing incidence rates for both sexes over the observed time frame.
+Differences in incidence rates between males and females are consistent over time, with females generally having higher rates.
+
+Age Group-Specific Trends:There is a noticeable rise in incidence rates over time in most age groups, particularly in the older populations.
+The youngest age groups (e.g., 0-4, 5-9, 10-14) maintain consistently low incidence rates throughout the years, with little variation.
+For males, the incidence rates in the highest age groups (e.g., 70-74 and above) are more pronounced compared to females.
+The higher the age group, the higher the probability of colon cancer, but for age group 85-89, the incidence of colon cancer fluctuated with the increase of years, and after around 1990, the incidence of colon cancer in this age group was lower than that in age group 80-84
+The trends for middle-aged groups (e.g., 40-44, 50-54) exhibit moderate increases over the years, with smoother and less steep curves compared to older groups.
+This suggests a gradual risk increase with age but highlights that the exponential increase occurs predominantly in the elderly.
 
 # Question 7
 
 ## Overview : 
 
+Fitting a suitable Poisson model with the total number of cases as dependent variable, using the population
+size as an offset, and calendar year and sex as independent variables.
+
 ## Code :
 
 ```{r echo=FALSE}
+poisson_model <- glm(total_cases ~ year + sex + offset(log(total_population)), 
+                     data = summary_data,
+                     family = poisson)
 
+summary(poisson_model)
 ```
 
 ## Output : 
 
+A detailed summary of the Poisson regression model, showing the coefficients, 
+standard errors, z-values, and significance levels for each predictor.
+
 ## Analysis : 
+
+Yearly Trend: The positive coefficient for year suggests a consistent increase in colon cancer incidence rates over time.
+Sex-Specific Differences: While males generally have higher crude incidence rates than females, the negative coefficient for sexMale suggests that, after controlling for year and population size, the adjusted incidence rate is slightly lower for males.
 
 # Question 8
 
