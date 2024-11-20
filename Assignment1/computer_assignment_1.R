@@ -275,4 +275,73 @@ ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
   ) +
   theme_minimal()
 
+#Q12
+
+# Merge cases and population data
+merged_data12 <- cases %>%
+  left_join(population, by = c("year", "agegroup", "sex"))
+
+standard_population12 <- population %>%
+  filter(year == 2022) %>%
+  group_by(sex, agegroup) %>%
+  summarise(Population_2022 = sum(n_pop), .groups = "drop")
+
+# Merge the standard population with the main data
+merged_data12 <- merged_data12 %>%
+  left_join(standard_population12, by = c("sex", "agegroup"))
+
+# Add log offset for population
+merged_data12 <- merged_data12 %>%
+  mutate(log_population = log(n_pop))
+
+# Fit a Poisson regression model
+poisson_model <- glm(
+  n ~ year + sex + agegroup,
+  data = merged_data12,
+  family = poisson
+)
+
+# Summarize the model
+summary(poisson_model)
+
+merged_data12 <- merged_data12 %>%
+  mutate(
+    Predicted_Count = predict(poisson_model, newdata = ., type = "response")
+  )
+head(merged_data12)
+standardized_rates_predicted <- merged_data12 %>%
+  group_by(year, sex) %>%
+  summarise(
+    Age_Standardized_Rate = sum(Predicted_Count/n_pop * Population_2022) / sum(Population_2022),
+    .groups = "drop"
+  )
+
+direct_standardized_rates <- merged_data12 %>%
+  group_by(year, sex) %>%
+  summarise(
+    Direct_Standardized_Rate = sum(n / n_pop * Population_2022) / sum(Population_2022),
+    .groups = "drop"
+  )
+head(direct_standardized_rates)
+
+comparison_data <- standardized_rates_predicted %>%
+  rename(Rate = Age_Standardized_Rate) %>%
+  mutate(Type = "Predicted") %>%
+  bind_rows(
+    direct_standardized_rates %>%
+      rename(Rate = Direct_Standardized_Rate) %>%
+      mutate(Type = "Direct")
+  )
+
+head(comparison_data)
+
+ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
+  geom_line() +
+  labs(
+    title = "Comparison of Predicted vs Direct Age-Standardized Rates",
+    x = "Year",
+    y = "Age-Standardized Rate",
+    color = "Rate Type"
+  ) +
+  theme_minimal()
 

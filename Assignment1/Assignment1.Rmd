@@ -2,7 +2,9 @@
 title: "AssignmentI"
 author: "Group2"
 date: "`r Sys.Date()`"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -427,15 +429,17 @@ ggplot() +
     
 # Question 11
 
-## Overview : 
+## Overview: 
 
 The task is to calculate direct age-standardized incidence rates for colon cancer across calendar years and sexes, using the population age distribution from 2022 as the reference (standard population). The objective is to create a graph of the age-standardized incidence rates and compare it with the non-age-standardized (crude) rates for males and females over time.
 
-## Code :
+## Code:
 
 To solve this, there are a series of steps that involves significant data pre-processing. 
 
-1. Define a Standard Population: Use the age distribution from 2022 as the reference.
+**1. Define a Standard Population:** 
+
+Use the age distribution from 2022 as the reference.
 
 ```{r echo=TRUE}
 # Summarize the age distribution in 2022
@@ -447,7 +451,9 @@ standard_population <- population %>%
 head(standard_population)
 ```
 
-2. Calculate Crude Rates: Determine the number of cases per unit population for each year, age group, and sex.
+**2. Calculate Crude Rates:**
+
+Determine the number of cases per unit population for each year, age group, and sex.
 
 ```{r echo=TRUE}
 # Merge cases and population data
@@ -461,7 +467,9 @@ merged_data <- merged_data %>%
 head(merged_data)
 ```
 
-3. Standardize Rates: Weight the crude rates by the 2022 age distribution to compute age-standardized rates.
+**3. Standardize Rates:** 
+
+Weight the crude rates by the 2022 age distribution to compute age-standardized rates.
 
 ```{r echo=TRUE}
 standardized_rates <- merged_data %>%
@@ -476,7 +484,9 @@ standardized_rates <- merged_data %>%
 head(standardized_rates)
 ```
 
-4. Visualization: Compare age-standardized and crude incidence rates across calendar years to evaluate the impact of standardization and reveal true trends. 
+**4. Visualization:** 
+
+Compare age-standardized and crude incidence rates across calendar years to evaluate the impact of standardization and reveal true trends. 
 
 We first compute the crude incidence rates and group by year and sex, similar to how we computed 'standardized_rates'. 
 
@@ -510,7 +520,7 @@ head(comparison_data)
 Finally, we plot the graph using this newly created table. 
 
 
-```{r echo=TRUE, results='hide'}
+```{r echo=TRUE, fig.show='hide'}
 ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
   geom_line() +
   labs(
@@ -523,7 +533,7 @@ ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
 
 ```
 
-## Output : 
+## Output: 
 ```{r echo=TRUE, fig.align='center'}
 ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
   geom_line() +
@@ -537,19 +547,19 @@ ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
 
 ```
 
-## Analysis : 
+## Analysis: 
 
-1. Difference Between Standardized and Crude Rates:
+**1. Difference Between Standardized and Crude Rates:**
 
   - The age-standardized rates are generally higher than the crude rates for both sexes, particularly in recent years.
   - This suggests that the population's age structure has shifted, with an increasing proportion of older individuals (who have a higher incidence of colon cancer).
 
-2. Trend Over Time:
+**2. Trend Over Time:**
 
   - Both standardized and crude rates show an increasing trend over time, indicating a rising incidence of colon cancer from 1970 to 2020.
   - The steeper increase in crude rates reflects the influence of population aging.
 
-3. Sex-Specific Differences:
+**3. Sex-Specific Differences:**
 
   - Males consistently exhibit slightly higher incidence rates than females across all years in both age-standardized and crude measures.
   - This could be attributed to differences in biological, behavioral, or exposure-related factors.
@@ -560,33 +570,172 @@ Age-standardization adjusts for changes in the population's age distribution, pr
 
 # Question 12
 
-## Overview : 
+## Overview: 
 
-## Code :
+The aim is to estimate age-standardized rates based on predicted rates from the regression model. This involves using the predicted values from a model (e.g., Poisson regression) and applying the age distribution in 2022 for standardization.
+
+## Code:
+
+**1. Data Pre-Processing**
+
+  We first perform the tables from our source tables for prediction. We combine the cases dataset (number of cancer cases) with the population dataset (population at risk) by matching year, agegroup, and sex. This table is then joined with the standard_population table from Q11. 
 
 ```{r echo=TRUE}
+merged_data12 <- cases %>%
+  left_join(population, by = c("year", "agegroup", "sex"))
+
+merged_data12 <- merged_data12 %>%
+  left_join(standard_population, by = c("sex", "agegroup"))
 
 ```
 
-## Output : 
+**2. Poisson Model** 
 
-## Analysis : 
+  Here, a Poisson regression model is fitted to predict the number of cases (n) based on year, sex, and agegroup.
+
+```{r echo=TRUE}
+poisson_model <- glm(
+  n ~ year + sex + agegroup,
+  data = merged_data12,
+  family = poisson
+)
+```
+
+  Using this newly fitted model, we predict the number of cases for each row in merged_data12. However, do note that this is not the rate.  
+
+```{r echo=TRUE}
+merged_data12 <- merged_data12 %>%
+  mutate(
+    Predicted_Count = predict(poisson_model, newdata = ., type = "response")
+  )
+
+```
+
+**3. Compute Age-standardized Rates**
+
+  The Predicted rates are standardized using the 2022 standard population (Population_2022).
+
+\[
+\text{Age-Standardized Rate} = \frac{\sum (\text{Predicted Rate} \times \text{Standard Population})}{\sum (\text{Standard Population})}
+\]
+
+  We also compute the Direct Standardized rates similar to the previous question. 
+
+```{r echo=TRUE}
+standardized_rates_predicted <- merged_data12 %>%
+  group_by(year, sex) %>%
+  summarise(
+    Age_Standardized_Rate = sum(Predicted_Count / n_pop * Population_2022) / sum(Population_2022),
+    .groups = "drop"
+  )
+
+direct_standardized_rates <- merged_data12 %>%
+  group_by(year, sex) %>%
+  summarise(
+    Direct_Standardized_Rate = sum(n / n_pop * Population_2022) / sum(Population_2022),
+    .groups = "drop"
+  )
+
+
+```
+
+**4. Comparison of Predicted vs Direct Age-Standardized Rates**
+
+  We create a single table by combining the above two tables. In order to eliminate data redundancy, we use bind_rows instead of joining them together. This way, we ensure the rates remain independent given the predictor variables. We introduce a new column to distinguish between the Predicted and Direct rates. 
+
+  Using this table, we plot the two different types of rates against the year to visualize the trend over time.  
+
+```{r echo=TRUE, fig.show='hide'}
+comparison_data <- standardized_rates_predicted %>%
+  rename(Rate = Age_Standardized_Rate) %>%
+  mutate(Type = "Predicted") %>%
+  bind_rows(
+    direct_standardized_rates %>%
+      rename(Rate = Direct_Standardized_Rate) %>%
+      mutate(Type = "Direct")
+  )
+
+ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
+  geom_line() +
+  labs(
+    title = "Comparison of Predicted vs Direct Age-Standardized Rates",
+    x = "Year",
+    y = "Age-Standardized Rate",
+    color = "Rate Type"
+  ) +
+  theme_minimal()
+
+```
+
+## Output: 
+```{r echo=FALSE, fig.align='center'}
+
+ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
+  geom_line() +
+  labs(
+    title = "Comparison of Predicted vs Direct Age-Standardized Rates",
+    x = "Year",
+    y = "Age-Standardized Rate",
+    color = "Rate Type"
+  ) +
+  theme_minimal()
+
+```
+
+## Analysis: 
+
+This graph compares direct age-standardized rates (calculated using observed data) and predicted age-standardized rates (based on a Poisson regression model) across calendar years (1970–2020) for males and females. 
+
+**1. Alignment Between Predicted and Direct Rates:**
+
+  - The predicted rates (cyan lines) closely follow the overall trend of the direct rates (red lines), indicating the model's ability to capture the underlying patterns in colon cancer incidence.
+  - While direct rates exhibit more year-to-year variability, the predicted rates provide a smoother representation of the trend.
+
+**2. Sex-Specific Differences:**
+
+  - Males (dotted lines) consistently have higher incidence rates compared to females (solid lines) throughout the study period. This pattern is evident in both predicted and direct rates.
+  - The gap between male and female incidence rates remains relatively stable over time.
+
+**3. Trend Over Time:**
+
+  - Both predicted and direct rates suggest an initial decline in colon cancer incidence from 1970 to the early 1980s.
+  - After this decline, rates show a steady increase from the 1980s onward, continuing through 2020. This trend is observed for both males and females.
+
+**4. Fluctuations in Direct Rates:**
+
+  - The direct rates show noticeable year-to-year fluctuations, particularly in earlier years (e.g., 1970–1980). This variability may reflect sampling noise or demographic changes in smaller population subgroups.
+
+**5. Long-Term Increase:**
+
+  - The increase in incidence rates after the 1980s reflects a persistent upward trend, likely influenced by changes in risk factors, diagnostic practices, or population health.
 
 # Question 13
 
 ## Overview : 
 
-## Code :
-
-```{r echo=TRUE}
-
-```
-
-## Output : 
-
 ## Analysis : 
 
+*These conclusions were derived from Q12's graph analysis by GPT. These seem pretty generalizable and can be used for our final answer as well. 
+**Insights**
 
+Rising Incidence Rates:
+
+- The long-term increase in incidence rates for both sexes after the 1980s is consistent with growing prevalence of colon cancer risk factors, such as dietary changes, sedentary lifestyles, and increased screening.
+
+Higher Risk in Males:
+
+- The consistently higher incidence rates for males compared to females highlight the need for sex-specific research and targeted prevention strategies.
+Modeling Performance:
+
+- The predicted rates successfully smooth the observed direct rates while maintaining the overall trends, making them a reliable tool for long-term incidence forecasting.
+Initial Decline:
+
+- The decline in rates from 1970 to the early 1980s might reflect earlier public health interventions, diagnostic practices, or changes in population behaviors.
+
+**Conclusion**
+- Predicted and direct rates agree on key trends, with an initial decline followed by a steady increase in colon cancer incidence from the 1980s onward.
+- The higher rates in males emphasize the importance of addressing sex-specific risk factors.
+- This analysis underscores the need for continued public health efforts to combat the growing burden of colon cancer, particularly through lifestyle interventions and early detection strategies.
 
 
 ## Appendix : 
