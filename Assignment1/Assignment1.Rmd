@@ -2,9 +2,7 @@
 title: "AssignmentI"
 author: "Group2"
 date: "`r Sys.Date()`"
-output:
-  html_document:
-    df_print: paged
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -714,31 +712,47 @@ This graph compares direct age-standardized rates (calculated using observed dat
 
 # Question 13
 
-## Overview : 
+## Conclusion regarding the pattern of colon cancer incidence across calendar years:
 
-## Analysis : 
+### 1. Long-Term Increase in Incidence Rates
 
-*These conclusions were derived from Q12's graph analysis by GPT. These seem pretty generalizable and can be used for our final answer as well. 
-**Insights**
+- Both observed and modeled data show a persistent increase in colon cancer incidence rates after the 1980s, likely driven by dietary changes, sedentary lifestyles, and advancements in diagnostic techniques. This trend highlights the growing burden of the disease over time.
 
-Rising Incidence Rates:
+### 2. Age-Specific Risks
 
-- The long-term increase in incidence rates for both sexes after the 1980s is consistent with growing prevalence of colon cancer risk factors, such as dietary changes, sedentary lifestyles, and increased screening.
+- Incidence rates increase exponentially with age, with the highest rates observed in the 85-89 age group. This pattern reflects the cumulative nature of cancer risk and the role of aging as a primary risk factor.
 
-Higher Risk in Males:
+### 3. Sex Differences in Incidence
 
-- The consistently higher incidence rates for males compared to females highlight the need for sex-specific research and targeted prevention strategies.
-Modeling Performance:
+- Males consistently exhibit higher incidence rates compared to females across all age groups and calendar years. This difference suggests potential biological, hormonal, or behavioral risk factors specific to males, warranting targeted research and prevention.
 
-- The predicted rates successfully smooth the observed direct rates while maintaining the overall trends, making them a reliable tool for long-term incidence forecasting.
-Initial Decline:
+### 4. Temporal Changes in Risk for Older Adults
 
-- The decline in rates from 1970 to the early 1980s might reflect earlier public health interventions, diagnostic practices, or changes in population behaviors.
+- The fluctuations observed in the 85-89 age group, especially for females, between 2000 and 2010, might indicate changes in diagnostic practices, screening policies, or survival bias among elderly populations.
 
-**Conclusion**
-- Predicted and direct rates agree on key trends, with an initial decline followed by a steady increase in colon cancer incidence from the 1980s onward.
-- The higher rates in males emphasize the importance of addressing sex-specific risk factors.
-- This analysis underscores the need for continued public health efforts to combat the growing burden of colon cancer, particularly through lifestyle interventions and early detection strategies.
+### 5. Initial Decline in Rates (1970–1980s)
+
+- A decline in colon cancer incidence rates during the early years (1970–1980) may reflect early public health efforts, dietary shifts, or under-diagnosis due to less advanced screening techniques.
+
+### 6. Impact of Population Aging
+
+- The increasing crude incidence rates partly result from demographic shifts, with a growing proportion of older individuals in the population. Age-standardized rates reveal that this trend is not solely due to aging, emphasizing the role of other factors like lifestyle and screening.
+
+### 7. Modeling Effectiveness
+
+- The use of splines to model interactions between calendar year, age, and sex effectively captures nuanced patterns, such as differing trends in males and females and variability across age groups. Predicted rates align closely with observed data, validating the model.
+
+### 8. Public Health Implications
+
+- The rise in age-standardized incidence rates suggests a true increase in colon cancer risk over time, beyond population aging. This calls for continued investment in preventive measures like promoting healthy diets, physical activity, and reducing smoking and alcohol use.
+
+### 9. Diagnostic and Screening Trends
+
+- The upward trends in incidence rates for middle-aged groups (e.g., 50-54, 70-74) suggest improved early detection through widespread screening programs. However, this also indicates a growing need for resources to manage detected cases.
+
+### 10. Need for Targeted Interventions
+
+- The consistently higher incidence rates in males and older adults emphasize the need for targeted interventions focusing on these high-risk groups. Sex-specific prevention strategies and increased access to screening for older populations are critical for reducing the disease burden.
 
 
 ## Appendix : 
