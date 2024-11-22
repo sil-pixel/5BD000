@@ -1,8 +1,11 @@
 ---
-title: "AssignmentI"
-author: "Group2"
+title: "Assignment I"
+author: "Group 2"
 date: "`r Sys.Date()`"
-output: pdf_document
+output:
+  pdf_document:
+  html_document:
+    fig_caption: true
 ---
 
 ```{r setup, include=FALSE}
@@ -17,19 +20,21 @@ library(splines)
 
 # Introduction
 
-# Data Exploration
+The objective of this report is to analyze the incidence of colon cancer in Sweden over time, focusing on variations across calendar years, age groups, and sex. By integrating population data with cancer case data, the report aims to compute and interpret incidence rates, exploring patterns and trends. Additionally, the study utilizes statistical modeling, including Poisson regression and age standardization, to provide a deeper understanding of the temporal and demographic aspects of colon cancer incidence. The analysis highlights both observed and modeled incidence rates, contributing to insights into public health trends and cancer epidemiology.
+
+---
 
 # Question 1
 
-## Overview : 
+## Overview: 
 
 Creating a plot showing the number of cases by age group and sex.
 
-## Code :
+## Code:
 
-```{r echo=TRUE}
+```{r eval=FALSE}
 path_to_cases <- "cases.tsv"
-cases <- read_tsv(path_to_cases)
+cases <- read_tsv(path_to_cases, show_col_types = FALSE)
 
 cases$agegroup <- factor(cases$agegroup, 
             levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
@@ -48,23 +53,45 @@ ggplot(cases, aes(x = agegroup, y = n, fill = sex)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-## Output : 
+## Output: 
+```{r echo=FALSE, fig.align='center'}
+path_to_cases <- "cases.tsv"
+cases <- read_tsv(path_to_cases, show_col_types = FALSE)
+
+cases$agegroup <- factor(cases$agegroup, 
+            levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
+            "25-29", "30-34", "35-39", "40-44", "45-49", 
+            "50-54", "55-59", "60-64", "65-69", "70-74", 
+            "75-79", "80-84", "85-89"))
+            
+options(repr.plot.width=40, repr.plot.height=9)
+ggplot(cases, aes(x = agegroup, y = n, fill = sex)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Number of Colon Cancer Cases by Age Group and Sex",
+       x = "Age Group",
+       y = "Number of Cases") +
+  theme_minimal()+
+  scale_y_continuous(labels = label_comma())+
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
 Generated plot visualizing age group distribution.
 
-## Analysis : 
+## Analysis: 
 
 From the plot we can conclude that the risk of getting a colon cancer increases exponentially above the age approx. 40-44, for both men and women. We can also see a clear trend of the number of cases being slightly higher for men up to the age group 80-84 when the trend reverses.
 
+---
+
 # Question 2
 
-## Overview : 
+## Overview: 
 
 Plotting colon cancer cases across subsequent years.
 
-## Code :
+## Code:
 
-```{r echo=TRUE}
+```{r eval=FALSE}
 total_cases_by_year_sex<- cases %>%
   group_by(year, sex) %>%
   summarise(total_cases = sum(n, na.rm = TRUE))
@@ -92,25 +119,54 @@ ggplot(subset(total_cases_by_year_sex, sex == "Male"), aes(x = year, y = total_c
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-## Output : 
+## Output: 
+```{r echo=FALSE, fig.align='center'}
+total_cases_by_year_sex<- cases %>%
+  group_by(year, sex) %>%
+  summarise(total_cases = sum(n, na.rm = TRUE))
 
-Two plots showing the nunber of cases in each calendar year.
+options(repr.plot.width=16, repr.plot.height=9)
+ggplot(subset(total_cases_by_year_sex, sex == "Female"), aes(x = year, y = total_cases)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Number of Colon Cancer Cases for Females by Year",
+       x = "Year",
+       y = "Total Number of Cases") +
+  theme_minimal()+
+  scale_y_continuous(labels = label_comma())+
+  theme(plot.title = element_text(hjust = 0.5))
 
-## Analysis : 
+options(repr.plot.width=16, repr.plot.height=9)
+ggplot(subset(total_cases_by_year_sex, sex == "Male"), aes(x = year, y = total_cases)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Number of Colon Cancer Cases for Males by Year",
+       x = "Year",
+       y = "Total Number of Cases") +
+  theme_minimal()+
+  scale_y_continuous(labels = label_comma())+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Two plots showing the number of cases in each calendar year.
+
+## Analysis: 
 
 From the two graphs we can see that there exists a trend of increasing colon cancer cases in subsequent calendar years.
 
+---
+
 # Question 3
 
-## Overview : 
+## Overview: 
 
 Exploring population data and plotting population size by age group and sex across subsequent years.
 
 ## Code :
 
-```{r echo=TRUE}
+```{r eval=FALSE}
 path_to_population <- "population.tsv"
-population<- read_tsv(path_to_population)
+population<- read_tsv(path_to_population, show_col_types = FALSE)
 
 population$agegroup <- factor(population$agegroup, 
                          levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
@@ -131,21 +187,48 @@ ggplot(population, aes(x = agegroup, y = n_pop, fill = sex)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-## Output : 
+## Output: 
 
-A figure showing a plots for every year in the data set. Each of the plots shows pupulation size across different age groups, the bars colors correspond to sex (orange - female, green - male).
+```{r echo=FALSE, fig.align='center'}
+path_to_population <- "population.tsv"
+population<- read_tsv(path_to_population, show_col_types = FALSE)
 
-## Analysis : 
+population$agegroup <- factor(population$agegroup, 
+                         levels = c("0-4", "5-9", "10-14", "15-19", "20-24", 
+                                    "25-29", "30-34", "35-39", "40-44", "45-49", 
+                                    "50-54", "55-59", "60-64", "65-69", "70-74", 
+                                    "75-79", "80-84", "85-89"))
 
-Population file inculdes the same variables and their types as cases file. The age groups, and calendar years are also the same. The difference is in the order of columns, and the year column is reversed in population, relative to cases.
+options(repr.plot.width=32, repr.plot.height=18)
+ggplot(population, aes(x = agegroup, y = n_pop, fill = sex)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  facet_wrap(~ year) + 
+  labs(title = "Population Size by Age Group and Year",
+       x = "Age Group",
+       y = "Population Size") +
+  theme_minimal() + 
+  scale_y_continuous(labels = label_comma())+
+  theme(axis.text.y = element_text(size=5))+
+  theme(axis.text.x = element_blank())+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+A figure showing a plots for every year in the data set. Each of the plots shows population size across different age groups, the bars colors correspond to sex (orange - female, green - male).
+
+## Analysis: 
+
+Population file includes the same variables and their types as cases file. The age groups, and calendar years are also the same. The difference is in the order of columns, and the year column is reversed in population, relative to cases.
+
+---
 
 # Question 4
 
-## Overview : 
+## Overview: 
 
 Merging the data and creating a data frame that shows total number of cases and the total population of males and females in each year.
 
-## Code :
+## Code:
 
 ```{r echo=TRUE}
 merged_data <- left_join(cases, population, by = c("agegroup", "year", "sex"))
@@ -159,17 +242,19 @@ summary_data <- merged_data %>%
 head(summary_data)
 ```
 
-## Output : 
+## Output: 
 
 New data frame that stores information merged from both of the analyzed data sets. 
 
+---
+
 # Question 5
 
-## Overview : 
+## Overview: 
 
 Creating a new data frame that will show incidence rate among both sexes in each year.
 
-## Code :
+## Code:
 
 ```{r echo=TRUE}
 merged_data <- merged_data %>%
@@ -183,24 +268,26 @@ summary_data <- summary_data %>%
 head(summary_data)
 ```
 
-## Output : 
+## Output: 
 
-A dataframe with information on the number of cases, populaltion and incidence year for men and women in each year. 
+A dataframe with information on the number of cases, population and incidence year for men and women in each year. 
 
-## Analysis : 
+## Analysis: 
 
-Incidence rate is the number of new cases of the outcome divided by the total person-time at risk, for a specific follow-up period. Here we simply divide the number of cases by the population size, without accounting for the time. For this type of data where we do not know the person-time at risk, it appears to be an appropriate way of calculating an incidence rate. However, this way should provide a reasonable estimate when, for example, the population is relatively stable over the time period (we can see from the plots in Question 3 that the population changes over the given time - we have more people in the elderly age group as the years increase). This suggests that this data is not suitable to infere the incidence rate.
+Incidence rate is the number of new cases of the outcome divided by the total person-time at risk, for a specific follow-up period. Here we simply divide the number of cases by the population size, without accounting for the time. For this type of data where we do not know the person-time at risk, it appears to be an appropriate way of calculating an incidence rate. However, this way should provide a reasonable estimate when, for example, the population is relatively stable over the time period (we can see from the plots in Question 3 that the population changes over the given time - we have more people in the elderly age group as the years increase). This suggests that this data is not suitable to infer the incidence rate.
+
+---
 
 # Question 6
 
-## Overview : 
+## Overview: 
 
-Plotting the incidence rate of colon cancer over calendar time and apply asmoother, separately by males and females.
-Creating a graph of incidence rates over calendar year by sex and age group, and apply smoothers.
+Plotting the incidence rate of colon cancer over calendar time and apply a smoother, separately by males and females.
+Creating a graph of incidence rates over calendar year by sex and age group, and apply a smoother.
 
-## Code :
+## Code:
 
-```{r echo=TRUE}
+```{r eval=FALSE}
 ggplot(summary_data, aes(x = year, y = incidence_rate, color = sex)) +
   geom_point() +
   geom_smooth(method = "loess", se = FALSE) +
@@ -219,31 +306,57 @@ ggplot(merged_data, aes(x = year, y = incidence_rate, color = agegroup)) +
   facet_wrap(~ sex) 
 ```
 
-## Output : 
+## Output: 
+
+```{r echo=FALSE, fig.align='center'}
+ggplot(summary_data, aes(x = year, y = incidence_rate, color = sex)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal()
+
+ggplot(merged_data, aes(x = year, y = incidence_rate, color = agegroup)) +
+  geom_point(cex = 0.7) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Incidence Rate of Colon Cancer Over Calendar Year by age group and sex",
+       x = "Year",
+       y = "Incidence Rate") +
+  theme_minimal() +
+  facet_wrap(~ sex) 
+```
+
 
 A graph showing the smoothed incidence rate trends for males and females over time.
 Faceted graphs showing incidence rate trends by age group and sex over calendar years.
 
-## Analysis : 
+## Analysis: 
 
-Overall Trends: The smoothed curves reveal increasing incidence rates for both sexes over the observed time frame.
+**Overall Trends:** 
+
+The smoothed curves reveal increasing incidence rates for both sexes over the observed time frame.
 Differences in incidence rates between males and females are consistent over time, with females generally having higher rates.
 
-Age Group-Specific Trends:There is a noticeable rise in incidence rates over time in most age groups, particularly in the older populations.
+**Age Group-Specific Trends:**
+
+There is a noticeable rise in incidence rates over time in most age groups, particularly in the older populations.
 The youngest age groups (e.g., 0-4, 5-9, 10-14) maintain consistently low incidence rates throughout the years, with little variation.
 For males, the incidence rates in the highest age groups (e.g., 70-74 and above) are more pronounced compared to females.
 The higher the age group, the higher the probability of colon cancer, but for age group 85-89, the incidence of colon cancer fluctuated with the increase of years, and after around 1990, the incidence of colon cancer in this age group was lower than that in age group 80-84
 The trends for middle-aged groups (e.g., 40-44, 50-54) exhibit moderate increases over the years, with smoother and less steep curves compared to older groups.
 This suggests a gradual risk increase with age but highlights that the exponential increase occurs predominantly in the elderly.
 
+---
+
 # Question 7
 
-## Overview : 
+## Overview: 
 
 Fitting a suitable Poisson model with the total number of cases as dependent variable, using the population
 size as an offset, and calendar year and sex as independent variables.
 
-## Code :
+## Code:
 
 ```{r echo=TRUE}
 poisson_model <- glm(total_cases ~ year + sex + offset(log(total_population)), 
@@ -253,23 +366,25 @@ poisson_model <- glm(total_cases ~ year + sex + offset(log(total_population)),
 summary(poisson_model)
 ```
 
-## Output : 
+## Output: 
 
 A detailed summary of the Poisson regression model, showing the coefficients, 
 standard errors, z-values, and significance levels for each predictor.
 
-## Analysis : 
+## Analysis: 
 
 Yearly Trend: The positive coefficient for year suggests a consistent increase in colon cancer incidence rates over time.
-Sex-Specific Differences: While males generally have higher crude incidence rates than females, the negative coefficient for sexMale suggests that, after controlling for year and population size, the adjusted incidence rate is slightly lower for males.
+Sex-Specific Differences: While males generally have higher crude incidence rates than females, the negative coefficient for sex Male suggests that, after controlling for year and population size, the adjusted incidence rate is slightly lower for males.
+
+---
 
 # Question 8
 
-## Overview : 
+## Overview: 
 
 Based on the poisson regression model, calculate the incidence rates in 1970 and 2020 for males and females, and discuss the assumptions about how rates change over time and between sexes.
 
-## Code :
+## Code:
 
 ```{r echo=TRUE}
 predict_data <- data.frame(year = c(1970, 2020),
@@ -284,21 +399,23 @@ predict_data$incidence_rate <- (predict_data$predicted_cases / predict_data$tota
 print(predict_data)
 ```
 
-## Output : 
+## Output: 
 
 A data frame with year, sex, and total population in the first three columns and the predicted number of cases as well as the corresponding incidence rate in the last two columns.
 
-## Analysis : 
+## Analysis: 
 
 From the result, the incidence rate in 1970 among males and females was 0.0002773751 and 0.0002933271, separately. Moreover, the incidence rate in 2020 among males and females was 0.0004794199 and 0.0004794199, separately. The assumption for year is that the incidence rate changes linearly over the calendar year, and the assumption for the sex is that there is no interaction between sex and year, which means that the ratio of the incidence rate of male and female is an unchanged constant.
 
+---
+
 # Question 9
 
-## Overview : 
+## Overview: 
 
 Fit a Poisson regression model that adjusts for age groups and calculate the incidence rates for males and females in the 70-74 age group for 1970 and 2020.
 
-## Code :
+## Code:
 
 ```{r echo=TRUE}
 poisson_model_age <- glm(n ~ year + sex + agegroup + offset(log(n_pop)),
@@ -320,29 +437,31 @@ predict_data_age$incidence_rate <- (predict_data_age$predicted_cases / predict_d
 print(predict_data_age)
 ```
 
-## Output : 
+## Output: 
 
 A detailed summary information of the new poisson model. A data frame with year, age group, sex, and population in the first four columns and the predicted number of cases as well as the corresponding incidence rate in the last two columns.
 
-## Analysis : 
+## Analysis: 
 
 From the result, the incidence rate in 1970 in age group 70-74 among males and females was 0.001360602 and 0.001164685, separately. Moreover, the incidence rate in 2020 in age group 70-74 among males and females was 0.001782354 and 0.001525708, separately.
 
+---
+
 # Question 10
 
-## Overview : 
+## Overview: 
 
 Refit the above model using splines for the effect of calendar year and age group. 
 Plotting graphs to show the incidence rate across calendar time for males and
 females at ages 52, 72 and 87 and compare it with the known observed values for age 
 group 50-54, 70-74 and 85-89.
 
-## Code :
+## Code:
 
-1. Refit the model using splines :
+1. Refit the model using splines:
  - Remove the assumption that the pattern across calendar year is the same across age and sex by adding relation between calendar year, age and sex using natural splines.
  - Natural Splines were used here since the relation between year, age and sex are not highly complex and unpredictable, and also for a smoother pattern and a cleaner fit. 
- - The degrees of freedom were chosen to be 4 as it had the least AIC compared to the models with other degrees of freedom and it did not pose a risk of overfitting by requiring higher parameters for a smoother curve.
+ - The degrees of freedom were chosen to be 4 as it had the least AIC compared to the models with other degrees of freedom and it did not pose a risk of over-fitting by requiring higher parameters for a smoother curve.
  - A three-way interaction between year, sex and age-mid was included in the poisson model to capture more complexity and nuanced interactions between year, sex, and age and the subtle patterns in the data.
 
 
@@ -365,7 +484,7 @@ print(spline_model$aic)
 
 Please refer to the Appendix for the entire summary for the spline model. 
 
-2. Plot the graphs with modeled vs observed incidence rate across calendar time :
+2. Plot the graphs with modeled vs observed incidence rate across calendar time:
 - First get the data for prediction from the newly fitted spline model and extract the observed data for the age groups 50-54, 70-74, 85-89.
 
 
@@ -389,7 +508,7 @@ observed_data <- merged_data %>%
   summarise(incidence_rate = sum(n) / sum(n_pop), .groups = 'drop')
 ```
 
-## Output : 
+## Output: 
 
 ```{r echo=TRUE,fig.align='center'}
 # Plot modeled vs. observed incidence rates
@@ -411,22 +530,23 @@ ggplot() +
   theme_minimal()
 ```
 
-## Analysis : 
+## Analysis: 
 
-1. Overall Trends : 
+**1. Overall Trends:** 
     - The modeled incidence rates (lines) show a gradual increase across calendar years for both sexes and age groups retaining the trend of drop in the incidence rate in females of age 85-89 between the year 2000 and 2010. 
     - The observed values (points) generally align with the modeled rates but exhibit more variability, especially in older age groups.
     
-2.	Differences by Age :
+**2.	Differences by Age:**
 	-	Incidence rates are consistently higher for older age groups (e.g., 87) compared to younger ones (e.g., 52), as clearly shown by both the modeled and observed rates.
 	- The gap between modeled and observed rates is slightly larger for older age groups, suggesting potential model misfit or variability in the data.
     
-3.  Sex Differences :
+**3.  Sex Differences:**
 	-	For all age groups, the incidence rates are higher for males (solid lines, triangles) compared to females (dashed lines, circles), except for age 52, which are almost entirely aligned for male and female.
     
-4.	Model Fit for Age Groups :
+**4.	Model Fit for Age Groups:**
 	-	The modeled rates for ages 52 and 72 fit the observed data closely, indicating a good representation of trends, except for age 87, which generally captured the increasing trend in the modeled rates, had some noticeable deviations from the observed points for females.
   
+---
     
 # Question 11
 
@@ -521,7 +641,7 @@ head(comparison_data)
 Finally, we plot the graph using this newly created table. 
 
 
-```{r echo=TRUE, fig.show='hide'}
+```{r eval=FALSE}
 ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
   geom_line() +
   labs(
@@ -535,7 +655,7 @@ ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
 ```
 
 ## Output: 
-```{r echo=TRUE, fig.align='center'}
+```{r echo=FALSE, fig.align='center'}
 ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
   geom_line() +
   labs(
@@ -569,6 +689,8 @@ ggplot(comparison_data, aes(x = year, y = Rate, color = Type, linetype = sex)) +
 
 Age-standardization adjusts for changes in the population's age distribution, providing a clearer picture of temporal trends. The increasing standardized rates suggest a true rise in colon cancer incidence beyond the effects of aging.
 
+---
+
 # Question 12
 
 ## Overview: 
@@ -579,7 +701,7 @@ The aim is to estimate age-standardized rates based on predicted rates from the 
 
 **1. Data Pre-Processing**
 
-  We first perform the tables from our source tables for prediction. We combine the cases dataset (number of cancer cases) with the population dataset (population at risk) by matching year, agegroup, and sex. This table is then joined with the standard_population table from Q11. 
+  We first perform the tables from our source tables for prediction. We combine the cases data set (number of cancer cases) with the population data set (population at risk) by matching year, agegroup, and sex. This table is then joined with the standard_population table from Q11. 
 
 ```{r echo=TRUE}
 merged_data12 <- cases %>%
@@ -710,6 +832,8 @@ This graph compares direct age-standardized rates (calculated using observed dat
 
   - The increase in incidence rates after the 1980s reflects a persistent upward trend, likely influenced by changes in risk factors, diagnostic practices, or population health.
 
+---
+
 # Question 13
 
 ## Conclusion regarding the pattern of colon cancer incidence across calendar years:
@@ -754,8 +878,9 @@ This graph compares direct age-standardized rates (calculated using observed dat
 
 - The consistently higher incidence rates in males and older adults emphasize the need for targeted interventions focusing on these high-risk groups. Sex-specific prevention strategies and increased access to screening for older populations are critical for reducing the disease burden.
 
+---
 
-## Appendix : 
+## Appendix: 
 
 ```{r echo=TRUE}
 summary(spline_model)
