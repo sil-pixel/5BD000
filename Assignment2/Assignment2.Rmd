@@ -1,5 +1,5 @@
 ---
-title: "AssignmentII"
+title: "Assignment II"
 author: "Group2"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -7,40 +7,154 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+#install.packages("pacman")
+pacman::p_load(tidyverse,rms,haven,mgcv,epitools,logistf,nlpred,geepack,skimr,pROC,tableone,emmeans,glmtoolbox,CalibrationCurves,mice, dcurves)
+library(tableone)
 ```
 
 # Introduction
 
+---
 
-# Data Exploration
+# Question 1:
 
-# Question 1
+Create table 1. Describe all available variables in the data. Show both, the original data and the imputed data. 
 
 ## Overview : 
+
+All available variables in the data are as follows:
+
+- *dibpat0f:* Dichotomous behavior pattern factor with levels A and B instead of 1 and 0.
+- *agegroup:* Categories for age.
+- *smoker:*  Binary variable for smoker or not.
+- *smokerf:*  Smoker factor with levels No and Yes.
+- *heightcm:* Convert height from inches to cm.
+- *weightkg:* Convert weight from pounds to kg.
+- *bmi:* Calculate BMI.
+- *bmicat:* Categories for BMI.
+- *cholmmol:* Convert cholesterol from mg/dl to mmol/l.
+- *sbp10:*  Categories of sbp (systolic blood pressure).
+- *sbpcat:* Systolic blood pressure factor.
+- *chd69f:* Coronary heart disease factor.
+
+Then, we have created tables for the original data. In the next step, we have imputed the data using Multivariate Imputation and created tables for the imputed data.
 
 ## Code :
 
 ```{r echo=FALSE}
+# read in the data
+data(wcgs)
+# create factors from var ditpat0 with levels B and A in stead of 0 and 1 
+wcgs$dibpat0f<-factor(wcgs$dibpat0,levels=0:1,label=c("B","A"))
+# create categories for age
+wcgs$agegroup <- cut(wcgs$age0,breaks=c(39,45,55,60),include.lowest = T,right = FALSE) 
+# binary variable for smoker or not
+wcgs$smoker <- ifelse(wcgs$ncigs0>0,1,0)
+wcgs$smokerf <- factor(wcgs$smoker,levels=c(0,1),labels=c("No","Yes"))
+# convert height from inches to cm
+wcgs$heightcm <- wcgs$height0*2.54
+wcgs$weightkg <- wcgs$weight0*0.45359237
+wcgs$bmi <- wcgs$weightkg / (wcgs$heightcm/100)^2
+wcgs$bmicat <- cut(wcgs$bmi,breaks=c(0,25,30,40),include.lowest = T,right = FALSE)
+wcgs$cholmmol <- wcgs$chol0/39
+wcgs$sbp10 <- wcgs$sbp0/10
+# Create categories of sbp (systolic blood pressure). Make sure to have the lowest and highest numbers
+wcgs$sbpcat <- cut(wcgs$sbp0,breaks=c(0,140,240),include.lowest = T,right = FALSE) # For use when tabulating the data you can create labels
+wcgs$chd69f <- factor(wcgs$chd69,levels=c(0,1),labels=c("No","Yes")) 
+wcgs$cholmmol <- ifelse(wcgs$cholmmol<15,wcgs$cholmmol,NA)
 
+d <- wcgs %>% select(id,agegroup,age0,cholmmol,sbp10,bmi,smokerf,arcus0,dibpat0f,chd69)
+dc <- d %>% drop_na()
+
+
+set.seed(154550)
+imp <- mice(d, m=1, maxit=0)
+predM<-imp$predictorMatrix
+# Leave out the ID column (the first column)
+predM[, 1] <- 0
+meth<-imp$method
+dimp <- mice(d, method= "pmm" ,m=1,predictorMatrix = predM, maxit=15, seed=71332, print=FALSE)
+di <- complete(dimp,1)
+             
+#di[is.na(d$cholmmol),"cholmmol"]
+```
+
+```{r}
+# Define variables
+variables <- c("id", "agegroup", "age0", "cholmmol", "sbp10", "bmi", "smokerf",
+               "arcus0", "dibpat0f", "chd69")
+categorical <- c("smokerf", "dibpat0f", "chd69")
+
+# Create Table 1 for the original data
+table_original <- CreateTableOne(vars = variables, data = wcgs, factorVars = categorical)
+
+# Create Table 1 for the imputed data
+table_imputed <- CreateTableOne(vars = variables, data = di, factorVars = categorical)
 ```
 
 ## Output : 
 
-## Analysis : 
+```{r echo=FALSE}
+# Print summary for comparison
+summary(table_original)
+summary(table_imputed)
+```
+
+## Conclusion : 
+
+The imputed data has been created using Multivariate Imputation where the missing data of cholmmol has been imputed. The imputed data has been created using Predictive Mean Matching (PMM) method. 
 
 # Question 2
 
+Calculate the overall risk of CHD in the cohort.
+
 ## Overview : 
 
-## Code :
+*a. What is the outcome we are interested in?*
 
-```{r echo=FALSE}
+The outcome we are interested in is Coronary Heart Disease (CHD).
+
+*b. What are the known risk factors for our outcome of interest?*
+
+The known risk factors for Coronary Heart Disease (CHD) are as follows:
+
+- Behaviour type A/B
+- Age
+- Cholesterol
+- Systolic Blood Pressure
+- BMI
+- Smoking
+- Corneal arcus
+
+*c. How many persons are included?*
+
+3154 middle-aged men, from 39 to 59 years of age, during the years 1960-1961 are included in this prospective cohort study.
+
+*d. What is the overall risk or rate and prevalence of the disease in our cohort?*
+
+The overall risk or rate and prevalence of the disease in our cohort is as follows:
+
+```{r}
+# Overall risk or rate
+overall_rate <- table(di$chd69)
+
+#calculate risk of CHD
+overall_risk <- overall_rate / sum(overall_rate)
+
+# extract the rate and risk into a data frame
+chd_frame <- data.frame(
+  "CHD Presence" = c("No", "Yes"),
+  "Overall Rate" = c(as.matrix(overall_rate)[1], as.matrix(overall_rate)[2]),
+  "Overall Risk" = c(as.matrix(overall_risk)[1], as.matrix(overall_risk)[2])
+)
+#print overall rate and risk into a table
+knitr::kable(chd_frame, col.names = c("CHD Presence", "Overall Rate", "Overall Risk"))
 
 ```
-
-## Output : 
-
+                                 
 ## Analysis : 
+
+The overall risk of Coronary Heart Disease (CHD) in the cohort is 0.08, which indicates that prevalence of the disease is 8% in the cohort.
 
 # Question 3
 
