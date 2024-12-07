@@ -312,17 +312,147 @@ This approach ensures that the final model is both statistically sound and pract
 
 # Question 5
 
+## a
+
 ## Overview : 
+
+To evaluate the model’s calibration, we will plot the calibration curve using the rms package in R. This curve compares the predicted probabilities from the logistic regression model with the observed outcomes. The slope and intercept of the calibration curve will also be reported, reflecting how well the model’s predictions align with the observed data.
 
 ## Code :
 
 ```{r echo=FALSE}
+# Plot the calibration curve
+cal <- calibrate(full_model, method = "boot", B = 1000)  
+plot(cal, main = "Calibration Curve")
 
+# Extract calibration points
+cal_points <- as.data.frame(cal[, c("predy", "calibrated.corrected")])  
+names(cal_points) <- c("Predicted", "Observed")
+
+# Fit the linear regression model of the calibration points and calculate the slope and intercept
+cal_model <- lm(Observed ~ Predicted, data = cal_points)
+calibration_slope <- coef(cal_model)["Predicted"]
+calibration_intercept <- coef(cal_model)["(Intercept)"]
+
+# Report the slope and the intercept of the calibration curve
+cat("Calibration Slope:", calibration_slope, "\n")
+cat("Calibration Intercept:", calibration_intercept, "\n")
 ```
 
 ## Output : 
 
+A calibration curve and the slope as well as the intercept of the calibration curve.
+
 ## Analysis : 
+
+From the calibration curve, it can be observed that there are deviations between the solid line and the reference line, indicating potential miscalibration. When the curve lies below the reference line, the model tends to underestimate probabilities. When it lies above, the model tends to overestimate probabilities. The bottom text shows the mean absolute error (0.008), which quantifies the average deviation between predicted and observed probabilities. Lastly, the slope of the calibration curve is 0.6127853, and the intercept of the calibration is 0.04989182. 
+
+## b
+
+## Overview : 
+
+The Hosmer-Lemeshow test will be applied to assess the goodness of fit of the logistic regression model. This test divides the data into deciles based on predicted probabilities and evaluates whether the observed outcomes match the predicted values within these groups. The test statistic, degrees of freedom, and p-value will be interpreted to determine model fit.
+
+## Code :
+
+```{r echo=FALSE}
+library(ResourceSelection)
+
+# Perform Hosmer-Lemeshow test on the model
+hl_test = hoslem.test(di$chd69, di$predicted_risk)
+hl_test
+
+cat("Hosmer-Lemeshow Test: Chi-squared =", hl_test$statistic, 
+    ", df =", hl_test$parameter, 
+    ", p-value =", hl_test$p.value, "\n")
+```
+
+## Output : 
+
+The result from the Hosmer-Lemeshow test.
+
+## Analysis : 
+
+According to the result from the Hosmer-Lemeshow test, the p-value is larger than 0.05, which means that we cannot reject the null hypothesis that the model's predicted probabilities are well-calibrated and fit the observed data.
+
+## c
+
+## Overview : 
+
+A new logistic regression model will be created using only the variable agegroup as the predictor. The discrimination ability of this simplified model will be estimated using the Area Under the Curve (AUC), a measure of the model’s ability to differentiate between positive and negative outcomes.
+
+## Code :
+
+```{r echo=FALSE}
+# Assuming 'agegroup' is a variable in the dataset
+agegroup_model <- lrm(chd69 ~ agegroup, data = di)
+
+# Predict probabilities for the agegroup model
+agegroup_probs <- predict(agegroup_model, data = di, type = "fitted")
+
+# Compute the ROC curve and AUC for the agegroup model
+roc_agegroup <- roc(di$chd69, agegroup_probs)
+auc(roc_agegroup)
+```
+
+## Output : 
+
+The AUC value of the new Agegroup model.
+
+## Analysis : 
+
+According to the calculation result of the AUC value, the AUC value is 0.6063. The value indicates this Agegroup model can provide some useful predictions, but its discriminative power is not strong enough for high-confidence decision-making.
+
+## d
+
+## Overview : 
+
+The discrimination performance of the original model and the simplified agegroup-only model will be compared statistically. The DeLong test will be employed to determine if the difference in the AUCs of the two models is statistically significant. The test result will help assess whether including additional predictors improves the model’s performance.
+
+## Code :
+
+```{r echo=FALSE}
+# Assuming 'model_probs' are the predicted probabilities from the final model
+roc_final_model <- roc(di$chd69, di$predicted_risk)
+
+# DeLong test for comparing AUCs
+roc_comparison <- roc.test(roc_final_model, roc_agegroup)
+roc_comparison
+```
+
+## Output : 
+
+The result from DeLong's test for two correlated ROC curves.
+
+## Analysis : 
+
+From the result of DeLong's test for two correlated ROC curves, the AUC of the roc from the final model is 0.7516887, and the AUC of the roc from the new Agegroup model is 0.6063021. Moreover, the p-value is less than 0.05, which indicates that the AUC of the roc from the final model is significantly higher than the AUC of the roc from the new Agegroup model.
+
+## e
+
+## Overview : 
+
+The Receiver Operating Characteristic (ROC) curves for both the original model and the simplified agegroup-only model will be plotted on the same graph. This visualization will allow for a direct comparison of the two models' discrimination capabilities. Key features such as AUC values and curve shapes will be highlighted.
+
+## Code :
+
+```{r echo=FALSE}
+# Plot both ROC curves together
+plot(roc_final_model, col = "blue", main = "ROC Curves Comparison", lwd = 2)
+lines(roc_agegroup, col = "red", lwd = 2)
+
+# Add a legend
+legend("bottomright", legend = c("Final Model", "Agegroup Model"),
+       col = c("blue", "red"), lwd = 2)
+```
+
+## Output : 
+
+Both ROC curves are in one figure.
+
+## Analysis : 
+
+Both ROC curves are plotted in one figure as above. This figure further justifies our conclusion that the AUC of the roc from the final model is significantly higher than the AUC of the roc from the new Agegroup model.
 
 # Question 6
 
