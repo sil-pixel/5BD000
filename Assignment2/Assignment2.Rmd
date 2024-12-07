@@ -121,13 +121,13 @@ The outcome we are interested in is Coronary Heart Disease (CHD).
 
 The known risk factors for Coronary Heart Disease (CHD) are as follows:
 
-- Behaviour type A/B
-- Age
-- Cholesterol
-- Systolic Blood Pressure
-- BMI
-- Smoking
-- Corneal arcus
+- Dichotomous Behaviour type A/B (dibpat0f)
+- Age (agegroup, age0)
+- Cholesterol (cholmmol)
+- Systolic Blood Pressure (sbp10)
+- BMI (bmi)
+- Smoking (smokerf)
+- Corneal arcus (arcus0)
 
 *c. How many persons are included?*
 
