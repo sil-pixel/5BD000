@@ -322,7 +322,7 @@ To evaluate the model’s calibration, we will plot the calibration curve using 
 
 ```{r echo=FALSE}
 # Plot the calibration curve
-cal <- calibrate(full_model, method = "boot", B = 1000)  
+cal <- calibrate(final_model, method = "boot", B = 1000)  
 plot(cal, main = "Calibration Curve")
 
 # Extract calibration points
@@ -345,7 +345,7 @@ A calibration curve and the slope as well as the intercept of the calibration cu
 
 ### Analysis : 
 
-From the calibration curve, it can be observed that there are deviations between the solid line and the reference line, indicating potential miscalibration. When the curve lies below the reference line, the model tends to underestimate probabilities. When it lies above, the model tends to overestimate probabilities. The bottom text shows the mean absolute error (0.008), which quantifies the average deviation between predicted and observed probabilities. Lastly, the slope of the calibration curve is 0.6127853, and the intercept of the calibration is 0.04989182. 
+From the calibration curve, it can be observed that there are deviations between the solid line and the reference line, indicating potential miscalibration. When the curve lies below the reference line, the model tends to underestimate probabilities. When it lies above, the model tends to overestimate probabilities. The bottom text shows the mean absolute error (0.008), which quantifies the average deviation between predicted and observed probabilities. Lastly, the slope of the calibration curve is 0.6866149, and the intercept of the calibration is 0.04216119. 
 
 ## b
 
