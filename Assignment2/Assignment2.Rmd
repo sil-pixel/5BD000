@@ -3,7 +3,7 @@ title: "Assignment II"
 author: "Group2"
 date: "`r Sys.Date()`"
 output:
-  pdf_document
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -23,11 +23,10 @@ library(tableone)
 
 Create table 1. Describe all available variables in the data. Show both, the original data and the imputed data. 
 
-## Overview : 
+## Overview: 
 
 All available variables in the data are as follows:
 
-- *dibpat0f:* Dichotomous behavior pattern factor with levels A and B instead of 1 and 0.
 - *agegroup:* Categories for age.
 - *smoker:*  Binary variable for smoker or not.
 - *smokerf:*  Smoker factor with levels No and Yes.
@@ -38,11 +37,14 @@ All available variables in the data are as follows:
 - *cholmmol:* Convert cholesterol from mg/dl to mmol/l.
 - *sbp10:*  Categories of sbp (systolic blood pressure).
 - *sbpcat:* Systolic blood pressure factor.
+- *dibpat0f:* Dichotomous behavior pattern factor with levels A and B instead of 1 and 0. A classification system where individuals are grouped into one of two distinct categories based on their behavioral traits
+- *arcus0:* Corneal arcus factor which is caused by lipid deposits in the cornea. It's presence may indicate high cholesterol levels and increased risk of heart disease.
 - *chd69f:* Coronary heart disease factor.
+
 
 Then, we have created tables for the original data. In the next step, we have imputed the data using Multivariate Imputation and created tables for the imputed data.
 
-## Code :
+## Code:
 
 ```{r echo=FALSE}
 # read in the data
@@ -95,7 +97,7 @@ table_original <- CreateTableOne(vars = variables, data = wcgs, factorVars = cat
 table_imputed <- CreateTableOne(vars = variables, data = di, factorVars = categorical)
 ```
 
-## Output : 
+## Output: 
 
 ```{r echo=FALSE}
 # Print summary for comparison
@@ -103,21 +105,21 @@ summary(table_original)
 summary(table_imputed)
 ```
 
-## Conclusion : 
+## Conclusion: 
 
 The imputed data has been created using Multivariate Imputation where the missing data of cholmmol has been imputed. The imputed data has been created using Predictive Mean Matching (PMM) method. 
 
-# Question 2
+# Question 2:
 
 Calculate the overall risk of CHD in the cohort.
 
-## Overview : 
+## Overview: 
 
-*a. What is the outcome we are interested in?*
+**a. What is the outcome we are interested in?**
 
 The outcome we are interested in is Coronary Heart Disease (CHD).
 
-*b. What are the known risk factors for our outcome of interest?*
+**b. What are the known risk factors for our outcome of interest?**
 
 The known risk factors for Coronary Heart Disease (CHD) are as follows:
 
@@ -129,11 +131,11 @@ The known risk factors for Coronary Heart Disease (CHD) are as follows:
 - Smoking (smokerf)
 - Corneal arcus (arcus0)
 
-*c. How many persons are included?*
+**c. How many persons are included?**
 
 3154 middle-aged men, from 39 to 59 years of age, during the years 1960-1961 are included in this prospective cohort study.
 
-*d. What is the overall risk or rate and prevalence of the disease in our cohort?*
+**d. What is the overall risk or rate and prevalence of the disease in our cohort?**
 
 The overall risk or rate and prevalence of the disease in our cohort is as follows:
 
@@ -155,20 +157,20 @@ knitr::kable(chd_frame, col.names = c("CHD Presence", "Overall Rate", "Overall R
 
 ```
                                  
-## Analysis : 
+## Analysis: 
 
 The overall risk of Coronary Heart Disease (CHD) in the cohort is 0.08, which indicates that prevalence of the disease is 8% in the cohort.
 
-# Question 3
+# Question 3:
 
 ## Overview: 
 
 To solve this problem, we need to build an optimal prediction model for the outcome of Coronary Heart Disease (CHD)
 using the available data. We will use logistic regression due to the binary nature of the outcome and select predictors that improve our predictions. Additionally, we will consider interaction terms and ensure that categorical variables are appropriately handled.
 
-#### 3.a. Building the Optimal Prediction Model
+#### 3.a. Building the Optimal Prediction Model:\newline
 
-**Step 1: Model Selection**
+**Step 1: Model Selection:**
 
 Logistic regression is suitable for predicting Coronary Heart Disease (CHD) because:
 
@@ -178,37 +180,25 @@ Logistic regression is suitable for predicting Coronary Heart Disease (CHD) beca
 
 The `rms` package in R provides functions for regression modeling strategies, including logistic regression via the `lrm` function.
 
-**Step 2: Variable Selection**
+**Step 2: Variable Selection:**
 
 We start by fitting a full model that includes all potential predictors:
 
-```{r}
+```{r, warning=FALSE}
 dd <- datadist(di)
 options(datadist="dd")
-full_model <- lrm(chd69 ~ dibpat0f + age0 + cholmmol + sbp10 + bmi + smokerf + arcus0, data=di, x=TRUE, y=TRUE)
+full_model <- lrm(chd69 ~ dibpat0f + age0 + cholmmol + sbp10 + bmi + smokerf 
+                  + arcus0, data=di, x=TRUE, y=TRUE)
+# Extract the model summary
+model_summary <- as.data.frame(summary(full_model))
+knitr::kable(model_summary, col.names = c("Variable", "Low", "High", "Diff", "Effect",
+                                          "S.E.", "Lower 95%", "Upper 95%"), 
+             align = c("l", "c", "c", "c", "c", "c", "c", "c"), 
+             caption = "Summary of the Logistic Regression Model")
+AIC(full_model)
 ```
 
-Next, we perform backward selection to remove variables that do not significantly contribute to the model (p > 0.05):
-
-```{r}
-bw_model <- fastbw(full_model, rule="p", sls=0.05)
-vars_kept <- bw_model$names.kept
-```
-
-We then construct a final model using only the variables retained in the backward selection:
-
-```{r}
-final_formula <- as.formula(paste("chd69 ~", paste(vars_kept, collapse=" + ")))
-final_model <- lrm(final_formula, data = di, x = TRUE, y = TRUE)
-summary(final_model)
-```
-
-**Explanation**
-
-- **Model Selection**: Logistic regression is appropriate for binary outcomes.
-- **Variable Selection**: Backward selection helps in identifying the most significant predictors, ensuring that the model is not overfitted and only includes variables that contribute meaningfully to the prediction of CHD.
-
-#### 3.b. Including Interaction Terms
+#### 3.b. Including Interaction Terms\newline
 
 We need to check if including interaction terms between certain predictors improves the model fit. When considering interaction terms in a logistic regression model, one needs to think which variables might have a combined effect on the outcome (Coronary Heart Disease) that's different from their individual effects. Here are some potential interaction terms along with their rationale:
 
@@ -219,55 +209,86 @@ We need to check if including interaction terms between certain predictors impro
 - **Corneal arcus and Age:** Corneal arcus is a sign of lipid deposition in the cornea, which may be associated with increased risk of Coronary Heart Disease. The effect of corneal arcus may be more pronounced in older individuals, making this interaction term a potential candidate.
 - **Smoking and Cholesterol:** Smoking can increase cholesterol levels, and the combination of these two factors may increase the risk of Coronary Heart Disease more than either factor alone. This interaction term can help capture the potential additive effect of smoking and high cholesterol.
 - **Age and BMI:** As people age, their BMI may have a greater impact on their risk of Coronary Heart Disease. This interaction term can help account for the potential increased risk of Coronary Heart Disease among older individuals with high BMI.
+- **Cholesterol and Dichotomous Behaviour type:** The Type A behaviour type is historically linked to increased risk of heart disease. This interaction term can help capture the potential additive effect of high cholesterol and Type A behaviour type.
+- **BMI and Dichotomous Behaviour type:** Type A behaviour type is associated with stress and may interact with BMI to increase the risk of Coronary Heart Disease. This interaction term can help account for the potential combined effect of high BMI and Type A behaviour type.
+
+We first define a base formula and then consider various interaction terms to see if they improve the model fit. After fitting the models, we compare them based on their AIC values to select the best model.
+
+### Code:
+
+```{r}
+# Define the base formula
+base_formula <- as.formula("chd69 ~ dibpat0f + age0 + cholmmol + sbp10 + bmi + smokerf + arcus0")
+# Define potential interaction terms
+interaction_terms <- c("age0*cholmmol", "age0:smokerf", "bmi * sbp10", 
+                       "cholmmol*sbp10", "age0*arcus0 ", "cholmmol:dibpat0f", 
+                       "smokerf * cholmmol", "age0 * bmi", "sbp10:smokerf", 
+                       "bmi:dibpat0f")
+
+# Initialize a list to store models and metrics
+models <- list()
+metrics <- data.frame(Model = character(), AIC = numeric(), stringsAsFactors =
+                        FALSE)
+
+# Loop through interaction terms
+for (i in 1:length(interaction_terms)) {
+  for (j in combn(interaction_terms, i, simplify = FALSE)) {
+    # Create formula with interactions
+    interaction_formula <- paste(base_formula, paste(j, collapse = " + "),
+                                 sep = " + ")
+    full_formula <- as.formula(interaction_formula)
+    
+    # Fit the model
+    model <- lrm(full_formula, data = di, x = TRUE, y = TRUE)
+    
+    # Save the model and its AIC
+    models[[paste(j, collapse = ", ")]] <- model
+    metrics <- rbind(metrics, data.frame(Model = paste(j, collapse = ", "),
+                                         AIC = AIC(model)))
+  }
+}
+
+# Sort models by AIC
+metrics <- metrics[order(metrics$AIC), ]
+
+# View the first 15 top-performing models
+knitr::kable(head(metrics, 15), col.names = c("Model", "AIC"))
+
+```
+**Explanation**
 
 After exploring various models with various combinations of interaction terms along with the full model, we went through a model selection process using AIC to compare the goodness-of-fit. We ultimately chose the model including the interactions between `bmi` and `sbp10`, and between `age0` and `arcus0` as it gave the lowest AIC on comparing with every other model combination.
 
-**Step 1: Fit a Model with Interaction Terms**
-
-```{r}
-interaction_model <- lrm(chd69 ~ dibpat0f + age0 + cholmmol + sbp10 + bmi + smokerf + arcus0 + bmi * sbp10 + age0 *
-arcus0, data=di, x=TRUE, y=TRUE)
-```
-
-**Step 2: Compare Models**
-
-We use the likelihood ratio test to compare the final model without interactions to the model with interactions:
-
-```{r}
-lrtest(final_model, interaction_model)
-AIC(final_model)
-AIC(interaction_model)
-```
-
-**Explanation**
-
 - **Interaction Terms**: Interaction terms allow us to assess whether the effect of one predictor on the outcome depends on the level of another predictor. For example, the effect of BMI on CHD might vary depending on systolic blood pressure.
 - **Model Comparison**: The likelihood ratio test helps determine if the addition of interaction terms significantly improves the model fit. Since the p-value is significant (p < 0.05), we include the interaction terms; otherwise, we would have retained the model without interactions. Coupled with the fact that the AIC was slightly better than the model without interactions though it adds a certain level of complexity given the additional number of parameters
+
+```{r}
+# Compare using LR test
+final_model <- models[[29]]
+lrtest(full_model, final_model)
+```
 
 #### 3.c. Calculating Predicted Risks
 
 Once the final model is selected, we calculate the predicted probabilities of CHD for each individual in the dataset and add these predictions to the dataset.
 
-**Step 1: Calculate Predicted Risks**
+**Predicted Risks**: These probabilities provide an estimate of each individual's risk of developing CHD based on the predictor values in the model. This information can be crucial for further analysis, such as assessing model calibration or making risk-based decisions.
 
-```{r}
+```{r, warning=FALSE}
 di$predicted_risk <- predict(final_model, di, type="fitted")
+head(di$predicted_risk)
+
 ```
 
-**Explanation**
+These values can be compared to the previously calculated overall risk of 0.0814838 in the cohort to see how individual risks vary based on the predictor variables.
 
-- **Predicted Risks**: These probabilities provide an estimate of each individual's risk of developing CHD based on
-the predictor values in the model. This information can be crucial for further analysis, such as assessing model calibration or making risk-based decisions.
-
-
-### Explanation
+## Conclusion:
 
 1. **Model Selection and Variable Selection**:
    - Started with a full logistic regression model.
-   - Performed backward selection to identify significant predictors.
 
 2. **Interaction Terms**:
-   - Assessed interaction effects between `bmi` and `sbp10`, and between `age0` and `arcus0`.
+   - Assessed interaction effects between various predictors based on domain knowledge. Considered multiple interaction terms to improve model fit.
    - Used likelihood ratio test to compare models with and without interactions.
 
 3. **Predicted Risks**:
