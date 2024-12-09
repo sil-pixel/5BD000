@@ -583,8 +583,8 @@ The discrimination performance of the original model and the simplified agegroup
 ### Code :
 
 ```{r echo=FALSE}
-# Assuming 'model_probs' are the predicted probabilities from the final model
-roc_final_model <- roc(di$chd69, di$predicted_risk)
+# Get the roc curve from question 4
+roc_final_model <- roc_curve
 
 # DeLong test for comparing AUCs
 roc_comparison <- roc.test(roc_final_model, roc_agegroup)
