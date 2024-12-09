@@ -296,19 +296,190 @@ These values can be compared to the previously calculated overall risk of 0.0814
 
 This approach ensures that the final model is both statistically sound and practically useful for predicting CHD risk.
 
+
 # Question 4
 
-## Overview : 
+## a
 
-## Code :
+### Overview : 
+
+This question focuses on evaluating the performance of the model using the AUC (Area Under the Curve) of the ROC (Receiver Operating Characteristic) curve. We will plot the ROC curve and calculate the AUC of the ROC curve, along with its 95% confidence intervals to assess how well the model can discriminate between cases and non-cases.
+
+### Code :
 
 ```{r echo=FALSE}
+# Calculate the predicted probabilities using the final model (from Question 3)
+di$predicted_risk <- predict(final_model, di, type = "fitted")
 
+# ROC curve
+roc_curve <- roc(di$chd69, di$predicted_risk)
+
+# Plot ROC curve
+plot(roc_curve, main = "ROC Curve", col = "blue", lwd = 2)
+
+# AUC and 95% confidence interval
+auc_value <- auc(roc_curve)
+auc_ci <- ci.auc(roc_curve)
+print(paste("AUC: ", round(auc_value, 3)))
+print(paste("95% CI for AUC: ", round(auc_ci[1], 3), " to ", round(auc_ci[2], 3)))
 ```
 
-## Output : 
+### Output : 
 
-## Analysis : 
+A ROC curve and  AUC of the ROC curve, along with its 95% confidence intervals
+
+### Analysis : 
+
+The AUC of the ROC curve is 0.752, which indicates that the model has a moderate to good ability to discriminate between cases and non-cases. The 95% confidence interval for AUC is 0.722 to 0.752, suggesting that this estimate is reasonably stable across different datasets, with no significant uncertainty in model performance.
+
+# Question 4
+
+## b
+
+### Overview : 
+
+This question focuses on finding the optimal threshold that maximizes the sum of sensitivity and specificity. We will plot the ROC curve, find the threshold, and report both sensitivity and specificity at that threshold.
+
+### Code :
+
+```{r echo=FALSE}
+# Find the threshold that maximizes sensitivity + specificity
+coords <- coords(roc_curve, "best", ret = c("threshold", "sensitivity", "specificity"))
+
+# Report sensitivity and specificity at the optimal threshold
+optimal_threshold <- coords$threshold
+sensitivity_at_threshold <- coords$sensitivity
+specificity_at_threshold <- coords$specificity
+
+print(paste("Optimal Threshold: ", round(optimal_threshold, 3)))
+print(paste("Sensitivity at Threshold: ", round(sensitivity_at_threshold, 3)))
+print(paste("Specificity at Threshold: ", round(specificity_at_threshold, 3)))
+```
+
+### Output : 
+
+Value of Optimal Threshold, Sensitivity and Specificity at Threshold
+
+### Analysis : 
+
+The optimal threshold is 0.094, where the sum of sensitivity and specificity is maximized. At this threshold:
+The sensitivity (True Positive Rate) is 66.5%, meaning the model correctly identifies 66.5% of actual cases.
+The specificity (True Negative Rate) is 72.7%, meaning the model correctly identifies 72.7% of non-cases.
+This threshold ensures a good balance between sensitivity and specificity, though further analysis of model performance at different thresholds may be beneficial.
+
+# Question 4
+
+## c
+
+### Overview : 
+
+In this case, the AUC was adjusted using the bootstrapping method to correct for possible optimism bias in the model. By resampling the training data 200 times, the adjusted AUC is calculated and compared with the original AUC.
+
+### Code :
+
+```{r echo=FALSE}
+set.seed(154550)
+# AUC adjustment using validate function (bootstrap method)
+validation_result <- validate(final_model, method = "boot", B = 200, statistic = "auc")
+
+# View the structure of the validation_result
+summary(validation_result)
+str(validation_result)
+
+# Extract the original AUC (index.orig) and the adjusted AUC (index.corrected)
+index_orig <- validation_result[, "index.orig"]   # original AUC
+index_corrected <- validation_result[, "index.corrected"]  # adjusted AUC
+
+# Print the original AUC and the adjusted AUC
+cat("Unadjusted AUC: ", round(mean(index_orig), 3), "\n")  # The average of the original AUC
+cat("Adjusted AUC: ", round(mean(index_corrected), 3), "\n")  # The average value of the adjusted AUC
+
+# Calculate the 95% confidence interval for the adjusted AUC
+Adjusted_auc_ci <- quantile(index_corrected, c(0.025, 0.975))
+cat("95% CI for Adjusted AUC: ", round(Adjusted_auc_ci[1], 3), " to ", round(Adjusted_auc_ci[2], 3), "\n")
+
+# Compare the original AUC with the adjusted AUC
+if (mean(index_corrected) < mean(index_orig)) {
+  print("The adjusted AUC is lower than the unadjusted AUC, indicating optimism correction.")
+} else {
+  print("The adjusted AUC is higher than or equal to the unadjusted AUC.")
+}
+```
+
+### Output : 
+
+Unadjusted AUC, adjusted AUC and 95% confidence intervals of Adjusted AUC
+
+### Analysis : 
+
+The original AUC (Unadjusted AUC) is 0.274,
+The Adjusted AUC was 0.258, taking into account the optimism bias of the model.
+The 95% confidence interval is [-0.057, 1.028], and the width of the confidence interval is large, indicating that the model may be affected by data fluctuations, resulting in a certain uncertainty in the adjusted AUC.
+Optimism bias correction: By comparing the original AUC with the adjusted AUC, we can see that the adjusted AUC is lower than the original AUC, indicating that bootstrapping has corrected the model's optimism bias. This result shows that the model may give an overly optimistic AUC value after overfitting, and the AUC obtained after correction is closer to the actual performance of the model.
+
+# Question 4
+
+## d
+
+### Overview : 
+
+In this task, we perform a 10-fold cross-validation on a logistic regression model to estimate the adjusted Area Under the Curve (AUC) and compare it with the unadjusted AUC values. Cross-validation helps in assessing the model's generalization ability by training and testing the model on different subsets of the data.
+
+### Code :
+
+```{r echo=FALSE}
+pacman::p_load(caret, pROC)
+set.seed(154550)
+# Set the number of folds for cross-validation
+num_folds <- 10
+
+# Create a 10-fold cross-validation partition
+folds <- createFolds(di$chd69, k = num_folds, list = TRUE)
+
+# Store the AUC values
+auc_values <- c()
+
+# Perform 10-fold cross-validation
+for (i in 1:num_folds) {
+  # Define training and testing sets
+  train_data <- di[folds[[i]], ]
+  test_data <- di[-folds[[i]], ]
+  
+  # Fit the logistic model on the training data
+  model_cv <- lrm(chd69 ~ dibpat0f + age0 + cholmmol + sbp10 + bmi + smokerf + arcus0, data = train_data, x = TRUE, y = TRUE)
+  
+  # Predict on the test set
+  predicted_prob <- predict(model_cv, test_data, type = "fitted")
+  
+  # Calculate the AUC for the current fold
+  roc_curve_cv <- roc(test_data$chd69, predicted_prob)
+  auc_values[i] <- auc(roc_curve_cv)
+}
+
+# Calculate the average AUC from the cross-validation
+avg_auc <- mean(auc_values)
+ci_auc <- quantile(auc_values, probs = c(0.025, 0.975))
+
+# Print the results
+print(paste("Average AUC from 10-fold CV: ", round(avg_auc, 3)))
+print(paste("95% CI for cross-validated AUC: ", round(ci_auc[1], 3), " to ", round(ci_auc[2], 3)))
+
+# Compare the cross-validated AUC with the Unadjusted
+print(paste("Unadjusted AUC: ", round(auc_value, 3)))
+print(paste("95% CI for Unadjusted AUC: ", round(auc_ci[1], 3), " to ", round(auc_ci[2], 3)))
+```
+
+### Output : 
+
+Adjusted AUC and 95% CI for adjusted AUC 
+
+### Analysis : 
+
+Cross-validated AUC: The 10-fold cross-validation resulted in an average AUC of 0.707 with a 95% confidence interval ranging from 0.679 to 0.732. This value reflects the model's performance on unseen data and provides an estimate of its generalization ability.
+
+Unadjusted AUC: The unadjusted AUC was calculated as 0.752, with a 95% confidence interval of 0.722 to 0.752. This AUC was computed using the entire dataset without cross-validation, and it tends to be optimistic due to overfitting to the data.
+
+Comparison: The cross-validated AUC is lower than the unadjusted AUC, which suggests that the unadjusted model might be overfitting to the training data. The cross-validation process, by testing the model on different folds, provides a more conservative estimate of the model’s performance.
 
 # Question 5
 
