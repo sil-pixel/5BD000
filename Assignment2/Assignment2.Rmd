@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("pacman")
 pacman::p_load(tidyverse,rms,haven,mgcv,epitools,logistf,nlpred,geepack,skimr,pROC,tableone,emmeans,glmtoolbox,CalibrationCurves,mice, dcurves,caret)
 library(tableone)
-library(ResourceSelection)
 set.seed(154550)
 ```
 
@@ -169,9 +168,9 @@ The overall risk of Coronary Heart Disease (CHD) in the cohort is 0.08, which in
 To solve this problem, we need to build an optimal prediction model for the outcome of Coronary Heart Disease (CHD)
 using the available data. We will use logistic regression due to the binary nature of the outcome and select predictors that improve our predictions. Additionally, we will consider interaction terms and ensure that categorical variables are appropriately handled.
 
-#### 3.a. Building the Optimal Prediction Model:\newline
+#### 3.a. Building the Optimal Prediction Model:
 
-**Step 1: Model Selection:**
+##### Step 1: Model Selection:
 
 Logistic regression is suitable for predicting Coronary Heart Disease (CHD) because:
 
@@ -181,7 +180,7 @@ Logistic regression is suitable for predicting Coronary Heart Disease (CHD) beca
 
 The `rms` package in R provides functions for regression modeling strategies, including logistic regression via the `lrm` function.
 
-**Step 2: Variable Selection:**
+##### Step 2: Variable Selection:
 
 We start by fitting a full model that includes all potential predictors:
 
@@ -306,12 +305,6 @@ This approach ensures that the final model is both statistically sound and pract
 
 This question focuses on evaluating the performance of the model using the AUC (Area Under the Curve) of the ROC (Receiver Operating Characteristic) curve. We will plot the ROC curve and calculate the AUC of the ROC curve, along with its 95% confidence intervals to assess how well the model can discriminate between cases and non-cases.
 
-### Approach:
-
-- Calculate the predicted probabilities using the final model.
-- Construct the ROC curve using the predicted probabilities.
-- Calculate the AUC of the ROC curve and its 95% confidence intervals.
-
 ### Code:
 
 ```{r warning=FALSE}
@@ -329,19 +322,18 @@ auc_ci <- ci.auc(roc_curve)
 
 ### Output: 
 
-A ROC curve and AUC of the ROC curve, along with its 95% confidence intervals
-
 ```{r echo=FALSE}
 # AUC and 95% confidence interval
-print(paste("AUC: ", round(auc_value, 3)))
-print(paste("95% CI for AUC: ", round(auc_ci[1], 3), " to ", round(auc_ci[2], 3)))
+knitr::kable(data.frame(AUC = auc_value, CI_Lower = auc_ci[1], CI_Upper = auc_ci[3]),
+             col.names = c("AUC", "CI Lower", "CI Upper"),
+             caption = "AUC and 95% Confidence Interval")
 ```
 
 ### Analysis: 
 
 - The AUC of the ROC curve is 0.752, which is greater than 0.5, indicating that the model has a moderate to good ability to discriminate between cases and non-cases.
 - The AUC value indicates that the model can correctly classify a randomly selected pair of individuals (one with CHD and one without) 75.2% of the time.
-- The 95% confidence interval for AUC is 0.722 to 0.752, suggesting that this estimate is reasonably stable across different datasets, with no significant uncertainty in model performance.
+- The 95% confidence interval for AUC is 0.722 to 0.782, suggesting that this estimate is reasonably stable across different datasets, with no significant uncertainty in model performance.
 
 ## 4.b: Sensitivity and Specificity at Optimal Threshold
 
@@ -383,18 +375,16 @@ print(paste("Sensitivity at Threshold: ", round(sensitivity_at_threshold, 3)))
 print(paste("Specificity at Threshold: ", round(specificity_at_threshold, 3)))
 ```
 
-### Analysis : 
+### Analysis: 
 
 The optimal threshold is 0.094, where the sum of sensitivity and specificity is maximized. At this threshold:
 
 **The sensitivity (True Positive Rate):**
 
-  -  is 66.5%, meaning the model correctly identifies 66.5% of actual cases.
   - This means that 66.5% of individuals with Coronary Heart Disease (CHD) are correctly identified by the model.
 
 **The specificity (True Negative Rate):**
 
-  - is 72.7%, meaning the model correctly identifies 72.7% of non-cases.
   - This means that 72.7% of individuals without CHD are correctly identified by the model.
   
 This threshold ensures a good balance between sensitivity and specificity, though further analysis of model performance at different thresholds may be beneficial.
@@ -413,7 +403,7 @@ In this case, the AUC was adjusted using the bootstrapping method to correct for
 - The AUC is extracted from the Somers' Dxy index, and the adjusted AUC is calculated.
 - Compare the original AUC with the adjusted AUC to assess optimism bias correction.
 
-### Code :
+### Code:
 
 ```{r}
 # AUC adjustment using validate function (bootstrap method)
@@ -431,7 +421,7 @@ original_AUC <- 0.5*(index_orig + 1)  # Calculate the original AUC
 adjusted_AUC <- 0.5*(index_corrected + 1)  # Calculate the adjusted AUC
 ```
 
-### Output : 
+### Output: 
 
 Unadjusted AUC, adjusted AUC from the validate method:
 
@@ -444,10 +434,10 @@ knitr::kable(
       caption = "Comparison of Original and Adjusted AUC")
 ```
 
-### Analysis : 
+### Analysis: 
 
-- The original AUC of the model was 0.752, indicating a moderate to good ability to discriminate between cases and non-cases.
-- The adjusted AUC, after correcting for optimism bias using the bootstrap method, was 0.743. 
+- The original AUC of the model was 0.752, indicating a moderate to good ability to discriminate between cases and non-cases of Coronary Heart Disease (CHD).
+- The adjusted AUC, after correcting for optimism bias using the bootstrap method, was 0.742.
 - This value provides a more realistic estimate of the model's performance on unseen data by accounting for potential overfitting in the original AUC calculation.
 
 
@@ -458,13 +448,6 @@ knitr::kable(
 In this task, we perform a 10-fold cross-validation on a logistic regression model to estimate the adjusted AUC and compare it with the unadjusted AUC values. Cross-validation helps in assessing the model's generalization ability by training and testing the model on different subsets of the data.
 
 **Cross-Validation:** Cross Validation is a resampling technique used to evaluate ML models by training and testing on multiple subsets of the data. It helps in estimating the model's performance on unseen data and reducing overfitting.
-
-### Approach:
-
-- Create a 10-fold cross-validation partition.
-- Fit the logistic regression model on the training data for each fold.
-- Predict on the test set and calculate the AUC for each fold.
-- Calculate the average AUC and the 95% confidence interval from the cross-validation and compare it with the previously calculated unadjusted and adjusted AUC.
 
 ### Code:
 
@@ -532,78 +515,90 @@ knitr::kable(
 
 To evaluate the model’s calibration, we will plot the calibration curve using the rms package in R. The slope and intercept of the calibration curve will also be reported, reflecting how well the model’s predictions align with the observed data.
 
-**Calibration:** - Calibration assesses how well the predicted probabilities from the model match the observed outcomes. A well-calibrated model has predicted probabilities that closely align with the true probabilities of the outcome.
+**Calibration:** - Calibration assesses how well the predicted probabilities from the model match the observed outcomes. A well-calibrated model has predicted probabilities that closely align with the true probabilities of the outcome. The calibration formula for binary outcome variable is given by:
+
+$logit(Y=1) = a + b \times logit(\hat Y)$
+
+where $Y$ is the observed outcome, $\hat Y$ is the predicted probability, and $a$ and $b$ are the intercept and slope of the calibration curve, respectively.
 
 ### Approach:
 
-- Plot the calibration curve using the `calibrate` function from the `rms` package.
+- Plot the calibration curve and calculate the slope and intercept of the calibration curve by using the `val.prob.ci.2` function from the `CalibrationCurves` package.
+- The function provides the slope, and intercept and c-statistic of the calibration curve by comparing the predicted probabilities with the observed outcomes using logistic regression.
+
+
+### Code:
+
+```{r message=FALSE}
+# Plot the calibration curve
+CalibrationCurves::val.prob.ci.2(di$predicted_risk, di$chd69)
+```
+
+**The intercept:** -0.00 (-0.13 to 0.13)
+
+**The slope:**  1.00 (0.85 to 1.15)
+
+**C-statistic:** 0.75 (0.72 to 0.78)
+
+
+### Analysis: 
+
+- The intercept and slope of the calibration curve are close to 0 and 1, respectively, indicating that the model's predicted probabilities align well with the observed outcomes.
+- The C-statistic (concordance index) of 0.75 suggests that the model has good discrimination ability, with a 75% probability of correctly ranking a randomly selected pair of individuals (one with CHD and one without) based on their predicted probabilities.
+- Also, we notice that the C-statistic is the same as the AUC value because it indicates the same thing, which is the model's ability to discriminate between positive and negative outcomes.
+
+## 5.b: Hosmer-Lemeshow Test
+
+### Overview: 
+
+Estimate the goodness of fit by the method of Hosmer and Lemeshow and interpret the test results.
+
+**Hosmer-Lemeshow Test:**  It is applied to assess the goodness of fit of the logistic regression model. This test divides the data into deciles (one-tenths) based on predicted probabilities and evaluates whether the observed outcomes match the predicted values within these groups.
+
+- *Null Hypothesis:* There is a statistical significance between the observed and predicted outcomes.
+
+- *Alternative Hypothesis:* There is no statistical significance between the observed and predicted outcomes, indicating a good fit.
+
+### Approach:
+
+- Perform the Hosmer-Lemeshow test using the `hoslem.test` function from the `ResourceSelection` package.
+- The test compares the observed and predicted outcomes within deciles and provides a chi-squared statistic, degrees of freedom, and p-value to assess the model's goodness of fit.
+- p > 0.05 : Fail to reject the null hypothesis, indicating a good fit.
+- p < 0.05 : Reject the null hypothesis, indicating a poor fit.
+
 ### Code:
 
 ```{r}
-# Plot the calibration curve
-cal <- calibrate(final_model, method = "boot", B = 1000)  
-plot(cal, main = "Calibration Curve")
-
-CalibrationCurves::val.prob.ci.2(di$predicted_risk, di$chd69)
-# Extract calibration points
-cal_points <- as.data.frame(cal[, c("predy", "calibrated.corrected")])  
-names(cal_points) <- c("Predicted", "Observed")
-
-# Fit the linear regression model of the calibration points and calculate the slope and intercept
-cal_model <- lm(Observed ~ Predicted, data = cal_points)
-calibration_slope <- coef(cal_model)["Predicted"]
-calibration_intercept <- coef(cal_model)["(Intercept)"]
-
-# Report the slope and the intercept of the calibration curve
-cat("Calibration Slope:", calibration_slope, "\n")
-cat("Calibration Intercept:", calibration_intercept, "\n")
+library(ResourceSelection)
+hl_test = hoslem.test(di$chd69, di$predicted_risk)
 ```
 
-### Output : 
+### Output: 
 
-A calibration curve and the slope as well as the intercept of the calibration curve.
-
-### Analysis : 
-
-From the calibration curve, it can be observed that there are deviations between the solid line and the reference line, indicating potential miscalibration. When the curve lies below the reference line, the model tends to underestimate probabilities. When it lies above, the model tends to overestimate probabilities. The bottom text shows the mean absolute error (0.008), which quantifies the average deviation between predicted and observed probabilities. Lastly, the slope of the calibration curve is 0.6866149, and the intercept of the calibration is 0.04216119. 
-
-## b
-
-### Overview : 
-
-The Hosmer-Lemeshow test will be applied to assess the goodness of fit of the logistic regression model. This test divides the data into deciles based on predicted probabilities and evaluates whether the observed outcomes match the predicted values within these groups. The test statistic, degrees of freedom, and p-value will be interpreted to determine model fit.
-
-### Code :
+The result from the Hosmer-Lemeshow test:
 
 ```{r echo=FALSE}
-library(ResourceSelection)
-
-# Perform Hosmer-Lemeshow test on the model
-hl_test = hoslem.test(di$chd69, di$predicted_risk)
-hl_test
-
 cat("Hosmer-Lemeshow Test: Chi-squared =", hl_test$statistic, 
     ", df =", hl_test$parameter, 
     ", p-value =", hl_test$p.value, "\n")
 ```
 
-### Output : 
 
-The result from the Hosmer-Lemeshow test.
 
-### Analysis : 
+### Analysis: 
 
-According to the result from the Hosmer-Lemeshow test, the p-value is larger than 0.05, which means that we cannot reject the null hypothesis that the model's predicted probabilities are well-calibrated and fit the observed data.
+- The p-value is 0.794, larger than 0.05, which means that there is no statistical significance between the observed and predicted outcomes, indicating a well calibrated model.
+- This suggests that we were able to predicy the Coronary Heart Disease (CHD) outcomes well using the logistic regression model.
 
-## c
+## 5.c: Prediction Model with Agegroup
 
-### Overview : 
+### Overview: 
 
 A new logistic regression model will be created using only the variable agegroup as the predictor. The discrimination ability of this simplified model will be estimated using the Area Under the Curve (AUC), a measure of the model’s ability to differentiate between positive and negative outcomes.
 
-### Code :
+### Code:
 
-```{r echo=FALSE}
+```{r}
 # Assuming 'agegroup' is a variable in the dataset
 agegroup_model <- lrm(chd69 ~ agegroup, data = di)
 
@@ -612,26 +607,33 @@ agegroup_probs <- predict(agegroup_model, data = di, type = "fitted")
 
 # Compute the ROC curve and AUC for the agegroup model
 roc_agegroup <- roc(di$chd69, agegroup_probs)
-auc(roc_agegroup)
 ```
 
-### Output : 
+### Output: 
 
 The AUC value of the new Agegroup model.
 
-### Analysis : 
+```{r}
+auc(roc_agegroup)
+```
 
-According to the calculation result of the AUC value, the AUC value is 0.6063. The value indicates this Agegroup model can provide some useful predictions, but its discriminative power is not strong enough for high-confidence decision-making.
+### Analysis: 
 
-## d
+- The AUC value of 0.6063 indicates this agegroup model can provide some useful predictions with only agegroup as a predictor.
+- This suggests that agegroup alone has some ability to differentiate between positive and negative outcomes of the Coronary Heart Disease (CHD).
 
-### Overview : 
+## 5.d: ROC Test
+
+### Overview: 
 
 The discrimination performance of the original model and the simplified agegroup-only model will be compared statistically. The DeLong test will be employed to determine if the difference in the AUCs of the two models is statistically significant. The test result will help assess whether including additional predictors improves the model’s performance.
 
-### Code :
+- p-value > 0.05 : Indicates there's no significant difference in the model's discrimination. 
+- p-value < 0.05 : Indicates there's a significant difference in the discrimination.
 
-```{r echo=FALSE}
+### Code:
+
+```{r}
 # Get the roc curve from question 4
 roc_final_model <- roc_curve
 
@@ -640,23 +642,20 @@ roc_comparison <- roc.test(roc_final_model, roc_agegroup)
 roc_comparison
 ```
 
-### Output : 
+### Analysis: 
 
-The result from DeLong's test for two correlated ROC curves.
+- The p-value is less than 0.05 indicating that there is a significant difference in the discrimination performance between the original model and the agegroup-only model.
+- This suggests that agegroup alone is not sufficient to achieve the same level of discrimination as the original model, which includes additional predictors.
 
-### Analysis : 
+## 5.e: ROC Curves Comparison
 
-From the result of DeLong's test for two correlated ROC curves, the AUC of the roc from the final model is 0.7516887, and the AUC of the roc from the new Agegroup model is 0.6063021. Moreover, the p-value is less than 0.05, which indicates that the AUC of the roc from the final model is significantly higher than the AUC of the roc from the new Agegroup model.
-
-## e
-
-### Overview : 
+### Overview: 
 
 The Receiver Operating Characteristic (ROC) curves for both the original model and the simplified agegroup-only model will be plotted on the same graph. This visualization will allow for a direct comparison of the two models' discrimination capabilities. Key features such as AUC values and curve shapes will be highlighted.
 
-### Code :
+### Code:
 
-```{r echo=FALSE}
+```{r}
 # Plot both ROC curves together
 plot(roc_final_model, col = "blue", main = "ROC Curves Comparison", lwd = 2)
 lines(roc_agegroup, col = "red", lwd = 2)
@@ -666,13 +665,11 @@ legend("bottomright", legend = c("Final Model", "Agegroup Model"),
        col = c("blue", "red"), lwd = 2)
 ```
 
-### Output : 
+### Analysis: 
 
-Both ROC curves are in one figure.
-
-### Analysis : 
-
-Both ROC curves are plotted in one figure as above. This figure further justifies our conclusion that the AUC of the roc from the final model is significantly higher than the AUC of the roc from the new Agegroup model.
+- The ROC curve for the final model (blue) is closer to the top-left corner, indicating better discrimination performance compared to the agegroup-only model (red).
+- This indicates that the additional predictors in the final model contribute to its improved performance compared to a model based solely on agegroup and that agegroup model is not strong enough for high-confidence decision-making.
+- However, the AUC values of both the models are greater than 0.5, indicating that both models have some ability to discriminate between the cases and non-cases od Coronary Heart Disease (CHD).
 
 # Question 6
 
