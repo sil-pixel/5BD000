@@ -555,16 +555,17 @@ Estimate the goodness of fit by the method of Hosmer and Lemeshow and interpret 
 
 **Hosmer-Lemeshow Test:**  It is applied to assess the goodness of fit of the logistic regression model. This test divides the data into deciles (one-tenths) based on predicted probabilities and evaluates whether the observed outcomes match the predicted values within these groups.
 
-- *Null Hypothesis:* There is a statistical significance between the observed and predicted outcomes.
+- *Null Hypothesis:* There is no statistical significance between the observed and predicted outcomes, indicating a good fit.
 
-- *Alternative Hypothesis:* There is no statistical significance between the observed and predicted outcomes, indicating a good fit.
+- *Alternative Hypothesis:* There is statistical significance between the observed and predicted outcomes, indicating a poor fit.
 
 ### Approach:
 
 - Perform the Hosmer-Lemeshow test using the `hoslem.test` function from the `ResourceSelection` package.
 - The test compares the observed and predicted outcomes within deciles and provides a chi-squared statistic, degrees of freedom, and p-value to assess the model's goodness of fit.
+
+- p <= 0.05 : Reject the null hypothesis, indicating a poor fit.
 - p > 0.05 : Fail to reject the null hypothesis, indicating a good fit.
-- p < 0.05 : Reject the null hypothesis, indicating a poor fit.
 
 ### Code:
 
@@ -587,7 +588,7 @@ cat("Hosmer-Lemeshow Test: Chi-squared =", hl_test$statistic,
 
 ### Analysis: 
 
-- The p-value is 0.794, larger than 0.05, which means that there is no statistical significance between the observed and predicted outcomes, indicating a well calibrated model.
+- We fail to reject Null Hypothesis since the p-value is 0.794, larger than 0.05, which means that there is no statistical significance between the observed and predicted outcomes, indicating a well calibrated model.
 - This suggests that we were able to predicy the Coronary Heart Disease (CHD) outcomes well using the logistic regression model.
 
 ## 5.c: Prediction Model with Agegroup
@@ -628,8 +629,12 @@ auc(roc_agegroup)
 
 The discrimination performance of the original model and the simplified agegroup-only model will be compared statistically. The DeLong test will be employed to determine if the difference in the AUCs of the two models is statistically significant. The test result will help assess whether including additional predictors improves the model’s performance.
 
-- p-value > 0.05 : Indicates there's no significant difference in the model's discrimination. 
-- p-value < 0.05 : Indicates there's a significant difference in the discrimination.
+**Null Hypothesis** - There is no discrimination difference between the original model and the agegroup-only model.
+**Alternate Hypothesis** - There is a significant discrimination difference between the original model and the agegroup-only model.
+
+- p-value <= 0.05 : Reject the Null Hypothesis, indicating there's a significant difference in the discrimination.
+- p-value > 0.05 : Fail to reject Null Hypothesis, indicating there's no significant difference in the model's discrimination. 
+
 
 ### Code:
 
