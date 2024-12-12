@@ -678,112 +678,70 @@ legend("bottomright", legend = c("Final Model", "Agegroup Model"),
 
 # Question 6
 
-## Overview : 
+## 6.a: Decision Curve Analysis
 
-## Code :
+### Overview : 
+Decision Curve Analysis is used to evaluate the clinical benefits of the model by comparing the net benefit of the model with that of the default strategies, that is "Treat-all" and "Treat-none". These strategies are based on the disease prevalence in our study population.
+
+### Code :
 
 ```{r echo=FALSE}
-
+	dca_data <- data.frame(predicted_risk = di$predicted_risk, actual_label = di$chd69)
+	dca_results <- dca(actual_label ~ predicted_risk, dca_data)
+	options(repr.plot.width=16, repr.plot.height=9)
+	plot(dca_results)
 ```
 
-## Output : 
+### Output : 
+The Decision Curve Analysis plot, with the default stratagies and our chosen model (predicted_risk).
 
-## Analysis : 
+### Analysis: 
+In the threshold range approx. 0-3% the model goes in line with the "treat-all" strategy. This is expected as at very low thresholds the cost of missing true positive is high and outweighs the cost of unnecessary treatments, making "treat-all" strategy useful (e.g. for serious diseases or when the cost of treatment is low).
+
+Then in range 3-25% the model's net benefit surpasses the "treat-all" strategy, staying constantly above the default strategies. This suggests its clinical usefullnes in this threshold, as it means the model strikes a good balance of the trade-off between correctly identifying patients at risk and avoiding unnecessary treatments.
+
+Looking at the entire plot we can observe that the model's net benefit converges to "treat-none" strategy's net benefit of 0, as threshold probability increases. However it's worth to note that the model's net benefit oscilates around 0, often going below the "treat-none" strategy in the range 25-50%. 
+
+## 6.b: Clinical Usefulness
+
+### Analysis:
+To access whether the model is clinically useful or harmful we need to analyze the relation of its net benefit to the default strategies, namely it should be higher for the given threshold.
+
+As stated above, the model doesn't seem to make a difference at very low thresholds, what is expected. Then the net benefit quickly diverges and becomes larger in 3-25% threshold probability range. This is the range where the model is the most clinically useful.
+
+In general for higher thresholds we would expect the cost of treatment being relatively high. A model that misjudges the case could lead to unnecessary interventions and causing more harm than not using it at all. Thus the range 25-50% is a range where the model doesn't provide value and is possibly harmful. Beyond this range the model's net benefit is 0, indicating no practical benefits.
+
+To sum up, the presented Decision Curve Analysis plot indicates that our model is clinically useful in the range approx. 3-25%.
+
+## 6.c: Net benefit comparison with age-only model.
+
+### Overview:
+5.c is a model only using variable agegroup as a predictor. The comparison between the two plots allows us to assess which model provides a better clinical performance across different threshold probabilities. The expectation is that the agegroup model is going to be less useful, as we found a statistically significant argument for using the more complex model in the previous exercises.
+
+### Code:
+```{r echo=FALSE}
+	dca_data_combined <- data.frame(predicted_risk_agegroup = agegroup_probs, predicted_risk = di$predicted_risk, actual_label = di$chd69)
+	dca_combined <- dca(actual_label ~ predicted_risk + predicted_risk_agegroup, dca_data_combined)
+	options(repr.plot.width=16, repr.plot.height=9)
+	plot(dca_combined)
+```
+
+### Output:
+The Decision Curve Analysis plot with default strategies like before, "predicted" risk showing net benefit of our final model and "predicted_risk_agegroup" showing the net benefit of the simplified age only model.
+
+### Analysis:
+As expected, the final model performs better than the one based solely on age. Comparing the net benefit curves of both, we can see that the age model shows clinical benefits in a way smaller range of threshold probabilities, as well as its net benefit value is visibly way below the final model across the entirety of this range.
+
+To cnoclude it is only slightly more useful than the default strategies and less useful than the final model. 
 
 # Question 7
 
-## Overview : 
+## Discussion on clinical usefulness of the final model: 
+Using various metrics, we find consistent results suggesting the usefulness of the chosen model. In Exercise 6, we used Decision Curve Analysis to discuss the clinical benefits in particular. We found that the model is helpful within the range of approximately 3-25%. It may not be advisable to use it in the range of 25-50%, and it does not offer real benefits in the remaining ranges.
 
-## Code :
+In practice, such a model appears to be clinically useful, as it adds value within threshold ranges typically used when dealing with serious diseases. In such cases, the consequences of missing a true positive case are very high, while treatments may also be invasive or costly. Therefore, a model that shows clear benefits and provides better assessments than default strategies is desirable, enabling more accurate identification of cases. 
 
-```{r echo=FALSE}
+## Possible next steps: 
+We have developed a model and performed various standard tests to measure its performance. Our model has an AUC of 0.7 with a 95% confidence interval ranging from 0.67 to 0.729, as a conservative estimate indicating model's usefulness compared to classifying patients at random. Additionally, we assessed the potential for recalibration and performed Decision Curve Analysis to identify the clinical settings where the model is most applicable. These steps further convinced us of the model's usefulness.
 
-```
-
-## Output : 
-
-## Analysis : 
-
-# Question 8
-
-## Overview : 
-
-## Code :
-
-```{r echo=FALSE}
-
-```
-
-## Output : 
-
-## Analysis : 
-
-# Question 9
-
-## Overview : 
-
-## Code :
-
-```{r echo=FALSE}
-
-```
-
-## Output : 
-
-## Analysis : 
-
-# Question 10
-
-## Overview : 
-
-## Code :
-
-```{r echo=FALSE}
-
-```
-
-## Output : 
-
-## Analysis : 
-
-# Question 11
-
-## Overview : 
-
-## Code :
-
-```{r echo=FALSE}
-
-```
-
-## Output : 
-
-## Analysis : 
-
-# Question 12
-
-## Overview : 
-
-## Code :
-
-```{r echo=FALSE}
-
-```
-
-## Output : 
-
-## Analysis : 
-
-# Question 13
-
-## Overview : 
-
-## Code :
-
-```{r echo=FALSE}
-
-```
-
-## Output : 
-
-## Analysis : 
+Assuming our goal is CHD prediction in patients, the next steps as researchers should include a comparison with state-of-the-art methods. If our model is found to be comparable, we shall proceed with external validation, that is look for a different similar datasets and use these to further test the model. Depending on our goals, we may also need to assess its transportability, i.e., its performance on datasets with population different from ours. If these steps are successful, we could proceed to clinical testing, such as through a randomized trial.
