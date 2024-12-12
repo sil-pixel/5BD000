@@ -680,25 +680,28 @@ legend("bottomright", legend = c("Final Model", "Agegroup Model"),
 
 ## 6.a: Decision Curve Analysis
 
-### Overview : 
+### Overview: 
 Decision Curve Analysis is used to evaluate the clinical benefits of the model by comparing the net benefit of the model with that of the default strategies, that is "Treat-all" and "Treat-none". These strategies are based on the disease prevalence in our study population.
 
-### Code :
+### Code:
 
-```{r echo=FALSE}
-	dca_data <- data.frame(predicted_risk = di$predicted_risk, actual_label = di$chd69)
-	dca_results <- dca(actual_label ~ predicted_risk, dca_data)
-	options(repr.plot.width=16, repr.plot.height=9)
-	plot(dca_results)
+```{r warning=FALSE, message=FALSE}
+dca_data <- data.frame(predicted_risk = di$predicted_risk, actual_label = di$chd69)
+dca_results <- dca(actual_label ~ predicted_risk, dca_data)
 ```
 
-### Output : 
-The Decision Curve Analysis plot, with the default stratagies and our chosen model (predicted_risk).
+### Output: 
+The Decision Curve Analysis plot, with the default strategies and our chosen model (predicted_risk):
+
+```{r echo=FALSE}
+options(repr.plot.width=16, repr.plot.height=9)
+plot(dca_results)
+```
 
 ### Analysis: 
 In the threshold range approx. 0-3% the model goes in line with the "treat-all" strategy. This is expected as at very low thresholds the cost of missing true positive is high and outweighs the cost of unnecessary treatments, making "treat-all" strategy useful (e.g. for serious diseases or when the cost of treatment is low).
 
-Then in range 3-25% the model's net benefit surpasses the "treat-all" strategy, staying constantly above the default strategies. This suggests its clinical usefullnes in this threshold, as it means the model strikes a good balance of the trade-off between correctly identifying patients at risk and avoiding unnecessary treatments.
+Then in range 3-25% the predicted risk model's net benefit surpasses the "treat-all" strategy, staying constantly above the default strategies. This suggests its clinical usefulness in this threshold, as it means the model strikes a good balance of the trade-off between correctly identifying patients at risk and avoiding unnecessary treatments.
 
 Looking at the entire plot we can observe that the model's net benefit converges to "treat-none" strategy's net benefit of 0, as threshold probability increases. However it's worth to note that the model's net benefit oscilates around 0, often going below the "treat-none" strategy in the range 25-50%. 
 
@@ -719,20 +722,26 @@ To sum up, the presented Decision Curve Analysis plot indicates that our model i
 5.c is a model only using variable agegroup as a predictor. The comparison between the two plots allows us to assess which model provides a better clinical performance across different threshold probabilities. The expectation is that the agegroup model is going to be less useful, as we found a statistically significant argument for using the more complex model in the previous exercises.
 
 ### Code:
-```{r echo=FALSE}
-	dca_data_combined <- data.frame(predicted_risk_agegroup = agegroup_probs, predicted_risk = di$predicted_risk, actual_label = di$chd69)
-	dca_combined <- dca(actual_label ~ predicted_risk + predicted_risk_agegroup, dca_data_combined)
-	options(repr.plot.width=16, repr.plot.height=9)
-	plot(dca_combined)
+```{r warning=FALSE, message=FALSE}
+dca_data_combined <- data.frame(predicted_risk_agegroup = agegroup_probs, 
+                                predicted_risk = di$predicted_risk, 
+                                actual_label = di$chd69)
+dca_combined <- dca(actual_label ~ predicted_risk + predicted_risk_agegroup,
+                    dca_data_combined)
 ```
 
 ### Output:
-The Decision Curve Analysis plot with default strategies like before, "predicted" risk showing net benefit of our final model and "predicted_risk_agegroup" showing the net benefit of the simplified age only model.
+The Decision Curve Analysis plot with default strategies like before, "predicted" risk showing net benefit of our final model and "predicted_risk_agegroup" showing the net benefit of the simplified age only model:
+
+```{r echo=FALSE}
+options(repr.plot.width=16, repr.plot.height=9)
+plot(dca_combined)
+```
 
 ### Analysis:
 As expected, the final model performs better than the one based solely on age. Comparing the net benefit curves of both, we can see that the age model shows clinical benefits in a way smaller range of threshold probabilities, as well as its net benefit value is visibly way below the final model across the entirety of this range.
 
-To cnoclude it is only slightly more useful than the default strategies and less useful than the final model. 
+To conclude it is only slightly more useful than the default strategies and less useful than the final model. 
 
 # Question 7
 
@@ -741,7 +750,8 @@ Using various metrics, we find consistent results suggesting the usefulness of t
 
 In practice, such a model appears to be clinically useful, as it adds value within threshold ranges typically used when dealing with serious diseases. In such cases, the consequences of missing a true positive case are very high, while treatments may also be invasive or costly. Therefore, a model that shows clear benefits and provides better assessments than default strategies is desirable, enabling more accurate identification of cases. 
 
-## Possible next steps: 
+### Summary of the model's performance:
 We have developed a model and performed various standard tests to measure its performance. Our model has an AUC of 0.7 with a 95% confidence interval ranging from 0.67 to 0.729, as a conservative estimate indicating model's usefulness compared to classifying patients at random. Additionally, we assessed the potential for recalibration and performed Decision Curve Analysis to identify the clinical settings where the model is most applicable. These steps further convinced us of the model's usefulness.
 
+## Possible next steps: 
 Assuming our goal is CHD prediction in patients, the next steps as researchers should include a comparison with state-of-the-art methods. If our model is found to be comparable, we shall proceed with external validation, that is look for a different similar datasets and use these to further test the model. Depending on our goals, we may also need to assess its transportability, i.e., its performance on datasets with population different from ours. If these steps are successful, we could proceed to clinical testing, such as through a randomized trial.
